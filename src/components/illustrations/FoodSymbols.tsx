@@ -112,7 +112,7 @@ export function CafeBean() {
   );
 }
 
-export const SYMBOL_RENDER: Record<SymbolKey, () => JSX.Element> = {
+export const SYMBOL_RENDER: Record<SymbolKey, () => ReactNode> = {
   pera: Pera,
   maca: Maca,
   ovo: Ovo,
