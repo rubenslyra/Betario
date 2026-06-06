@@ -3,6 +3,8 @@ import { useLab } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
+import { PresetManager } from "@/components/PresetManager";
+import { motion, AnimatePresence } from "framer-motion";
 
 const OPTIONS = [
   { label: "25%", value: 25 },
@@ -47,7 +49,7 @@ export function CapacityExperiment() {
     win: "Interfaces podem transformar incerteza em sensação de escolha.",
   };
 
-  const fillHeight = filling ? "70%" : actual !== null ? `${Math.min(actual, 105)}%` : "0%";
+  const fillTarget = filling ? 70 : actual ?? 0;
   const diff = guess !== null && actual !== null ? Math.abs(guess - actual) : null;
 
   return (
@@ -66,16 +68,28 @@ export function CapacityExperiment() {
           aria-live="polite"
         >
           <div className="relative h-full w-32 overflow-hidden rounded-2xl border-2 border-foreground/20 bg-glass">
-            <div
-              className="absolute bottom-0 w-full transition-all duration-[1400ms]"
+            <motion.div
+              className="absolute bottom-0 w-full"
+              initial={{ height: "0%" }}
+              animate={{ height: `${Math.min(fillTarget, 105)}%` }}
+              transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
               style={{
-                height: fillHeight,
                 backgroundImage:
                   "radial-gradient(circle at 20% 30%, oklch(0.78 0.16 75) 3px, transparent 4px), radial-gradient(circle at 70% 60%, oklch(0.85 0.17 92) 3px, transparent 4px), radial-gradient(circle at 50% 80%, oklch(0.72 0.16 235) 3px, transparent 4px)",
                 backgroundSize: "16px 16px",
                 backgroundColor: "oklch(0.35 0.05 250)",
               }}
             />
+            {filling &&
+              [0, 1, 2, 3].map((i) => (
+                <motion.span
+                  key={i}
+                  initial={{ y: -10, x: `${20 + i * 20}%`, opacity: 0 }}
+                  animate={{ y: 220, opacity: [0, 1, 0] }}
+                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18 }}
+                  className="absolute left-0 top-0 h-2 w-2 rounded-full bg-gold/70"
+                />
+              ))}
           </div>
         </div>
 
@@ -83,10 +97,11 @@ export function CapacityExperiment() {
           <legend className="sr-only">Escolha a capacidade estimada</legend>
           <div className="grid grid-cols-4 gap-2">
             {OPTIONS.map((o) => (
-              <button
+              <motion.button
                 key={o.value}
                 onClick={() => fill(o.value)}
                 disabled={filling}
+                whileTap={{ scale: 0.95 }}
                 aria-pressed={guess === o.value}
                 className={`rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value
@@ -95,26 +110,34 @@ export function CapacityExperiment() {
                 } disabled:opacity-50`}
               >
                 {o.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </fieldset>
 
-        {actual !== null && cat && (
-          <div role="status">
-            <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
-              Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
-              <span className="text-gold">{actual}%</span> · Erro: {diff}%
-            </div>
-            <CharacterReaction
-              mood={cat === "win" ? "happy" : cat === "near-miss" ? "relieved" : "sad"}
-              message={messages[cat]}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {actual !== null && cat && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              role="status"
+            >
+              <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
+                Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
+                <span className="text-gold">{actual}%</span> · Erro: {diff}%
+              </div>
+              <CharacterReaction
+                mood={cat === "win" ? "happy" : cat === "near-miss" ? "relieved" : "sad"}
+                message={messages[cat]}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <ExperimentControls experiment="capacity" />
+      <PresetManager experiment="capacity" />
       <ExperimentCharts experiment="capacity" />
     </div>
   );
