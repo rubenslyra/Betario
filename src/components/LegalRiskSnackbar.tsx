@@ -3,15 +3,21 @@ import { useLocation } from "@tanstack/react-router";
 import { Scale, X } from "lucide-react";
 
 const messages: Record<string, string> = {
-  "/": "Aviso educacional: no Brasil, apostas de quota fixa são disciplinadas por legislação específica e fiscalizadas no âmbito da Secretaria de Prêmios e Apostas. Esta aplicação não realiza apostas reais.",
+  "/": "Este é um laboratório educacional. Não há dinheiro real, saque real ou aposta real.",
   "/experiments":
-    "Jogo responsável: normas brasileiras tratam de prevenção, identificação e tratamento de comportamentos problemáticos. Este laboratório é apenas educativo.",
+    "Resultado simulado: observe a lógica, não a recompensa. Saldo visual pode diferir do realmente sacável.",
+  "/experiments/symbols":
+    "Quase acerto pode influenciar a percepção, mas não muda a matemática do sistema.",
+  "/experiments/coffee":
+    "Resultado simulado: observe a lógica, não a recompensa. Percepção de controle não muda a probabilidade.",
+  "/experiments/capacity":
+    "Resultado simulado: a percepção visual pode enganar a estimativa de volume.",
   "/ledger":
-    "Risco de produto digital: decisões de interface, repetição, recompensa e falta de alerta podem gerar responsabilidade jurídica e danos sociais.",
+    "O ledger registra eventos como livro-razão. Saldo visual pode ser diferente de saldo realmente sacável.",
   "/report":
-    "UX persuasiva deve ser estudada com responsabilidade: este sistema demonstra padrões de retenção sem incentivá-los.",
+    "O objetivo é interpretar padrões, fricções e riscos de design — não recompensas.",
   "/sources":
-    "As referências apresentadas servem como base educacional para discussão crítica sobre design persuasivo e regulação.",
+    "As referências apresentadas servem como base educacional para discussão crítica.",
 };
 
 export function LegalRiskSnackbar() {
