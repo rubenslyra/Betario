@@ -5,21 +5,25 @@ import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  SYMBOL_KEYS,
+  SYMBOL_LABEL,
+  SYMBOL_RENDER,
+  type SymbolKey,
+} from "@/components/illustrations/FoodSymbols";
 
-const SYMBOLS = ["🍐", "🍎", "🥚", "☕", "🍞", "🫘"];
 type Phase = "idle" | "spinning" | "result";
 
 function Confetti() {
-  const pieces = Array.from({ length: 24 });
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-      {pieces.map((_, i) => (
+      {Array.from({ length: 28 }).map((_, i) => (
         <motion.span
           key={i}
           initial={{ x: "50%", y: "50%", opacity: 1, scale: 0.6 }}
           animate={{
-            x: `${50 + (Math.random() - 0.5) * 120}%`,
-            y: `${50 + (Math.random() - 0.5) * 120}%`,
+            x: `${50 + (Math.random() - 0.5) * 160}%`,
+            y: `${50 + (Math.random() - 0.5) * 160}%`,
             opacity: 0,
             scale: 1,
             rotate: Math.random() * 720,
@@ -27,7 +31,7 @@ function Confetti() {
           transition={{ duration: 1 + Math.random() * 0.6, ease: "easeOut" }}
           className="absolute h-2 w-2 rounded-sm"
           style={{
-            background: ["oklch(0.78 0.17 145)", "oklch(0.85 0.17 92)", "oklch(0.72 0.16 235)"][i % 3],
+            background: ["#7fb069", "#c9a84c", "#5fbedc", "#e63946"][i % 4],
           }}
         />
       ))}
@@ -35,9 +39,46 @@ function Confetti() {
   );
 }
 
+function Reel({
+  symbol,
+  spinning,
+  highlight,
+  shake,
+}: {
+  symbol: SymbolKey;
+  spinning: boolean;
+  highlight?: "win" | "near" | null;
+  shake?: boolean;
+}) {
+  const Render = SYMBOL_RENDER[symbol];
+  return (
+    <motion.div
+      animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : highlight === "win" ? { scale: [1, 1.12, 1] } : {}}
+      transition={{ duration: 0.55 }}
+      className={`relative flex h-28 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 bg-gradient-to-b from-panel-soft to-panel shadow-inner backdrop-blur ${
+        highlight === "win"
+          ? "border-success/70 shadow-success/30"
+          : highlight === "near"
+            ? "border-gold/70"
+            : "border-border"
+      }`}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-white/15 to-transparent" />
+      <motion.div
+        key={spinning ? `s-${Math.random()}` : symbol}
+        initial={spinning ? { y: -40, opacity: 0 } : false}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Render />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export function SymbolsExperiment() {
   const [phase, setPhase] = useState<Phase>("idle");
-  const [reels, setReels] = useState<string[]>(["🍐", "🍎", "🥚"]);
+  const [reels, setReels] = useState<SymbolKey[]>(["pera", "maca", "ovo"]);
   const [category, setCategory] = useState<"loss" | "near-miss" | "win" | null>(null);
   const [pulse, setPulse] = useState(0);
   const registerBet = useLab((s) => s.registerBet);
@@ -53,94 +94,99 @@ export function SymbolsExperiment() {
       setInterval(() => {
         setReels((prev) => {
           const next = [...prev];
-          next[i] = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+          next[i] = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
           return next;
         });
-      }, 70),
+      }, 80),
     );
-
-    [600, 950, 1300].forEach((t, i) => setTimeout(() => clearInterval(tickers[i]), t));
+    [700, 1050, 1400].forEach((t, i) => setTimeout(() => clearInterval(tickers[i]), t));
 
     setTimeout(() => {
       tickers.forEach(clearInterval);
       const cat = rollOutcome("symbols");
-      let final: string[];
+      let final: SymbolKey[];
       if (cat === "win") {
-        const s = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+        const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
         final = [s, s, s];
       } else if (cat === "near-miss") {
-        const s = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
-        const other = SYMBOLS.filter((x) => x !== s)[Math.floor(Math.random() * (SYMBOLS.length - 1))];
+        const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
+        const other = SYMBOL_KEYS.filter((x) => x !== s)[Math.floor(Math.random() * (SYMBOL_KEYS.length - 1))];
         final = [s, s, other];
       } else {
-        final = [0, 1, 2].map(() => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-        if (new Set(final).size < 3) final[2] = SYMBOLS[(SYMBOLS.indexOf(final[2]) + 1) % SYMBOLS.length];
+        final = [0, 1, 2].map(() => SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)]) as SymbolKey[];
+        if (new Set(final).size < 3) final[2] = SYMBOL_KEYS[(SYMBOL_KEYS.indexOf(final[2]) + 1) % SYMBOL_KEYS.length];
       }
       setReels(final);
-      const payout = cat === "win" ? 5 : 0;
       setCategory(cat);
       setPhase("result");
       setPulse((p) => p + 1);
-      registerResult("symbols", cat, payout);
-    }, 1400);
+      registerResult("symbols", cat, cat === "win" ? 5 : 0);
+    }, 1500);
   };
 
   const messages = {
-    loss: "Resultados isolados podem parecer pessoais, mas fazem parte da distribuição.",
-    "near-miss":
-      "Dois símbolos iguais parecem proximidade, mas não mudam a expectativa matemática.",
-    win: "Ganhos podem acontecer no curto prazo, mas não explicam o sistema no longo prazo.",
+    loss: "Observe o resultado.",
+    "near-miss": "Foi perto, mas quase acerto não é garantia.",
+    win: "Boa leitura! Agora compare com o relatório.",
   };
 
   return (
     <div className="space-y-6">
-      <section className="glass-panel p-6" aria-labelledby="symbols-heading">
-        <h2 id="symbols-heading" className="mb-1 text-lg font-semibold">
-          Giro dos símbolos
-        </h2>
+      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="symbols-heading">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 25% 20%, oklch(0.72 0.16 235 / 0.18), transparent 45%), radial-gradient(circle at 80% 80%, oklch(0.85 0.17 92 / 0.14), transparent 45%)",
+          }}
+        />
+        <div className="mb-1 flex items-center gap-2">
+          <h2 id="symbols-heading" className="text-lg font-semibold">
+            Giro dos símbolos
+          </h2>
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+            Laboratório de probabilidade
+          </span>
+        </div>
         <p className="mb-6 text-xs text-muted-foreground">
-          Aposta fictícia de R$1,00 por giro. Resultado demonstrativo.
+          Aposta fictícia de R$1,00 por giro. Resultado demonstrativo — sem dinheiro real.
         </p>
 
         <div
-          className="relative mx-auto mb-6 flex justify-center gap-3 rounded-2xl bg-background/60 p-6 ring-1 ring-border"
+          className="relative mx-auto mb-6 flex justify-center gap-3 rounded-2xl border border-border bg-background/50 p-6 shadow-inner"
           role="group"
           aria-label="Rolos de símbolos"
           aria-live="polite"
         >
           {reels.map((s, i) => (
-            <motion.div
-              key={`${i}-${pulse}`}
-              animate={
-                phase === "result" && category === "near-miss" && i === 2
-                  ? { x: [0, -6, 6, -4, 4, 0] }
-                  : phase === "result" && category === "win"
-                  ? { scale: [1, 1.12, 1] }
-                  : {}
-              }
-              transition={{ duration: 0.5 }}
-              className={`flex h-24 w-20 items-center justify-center rounded-xl border bg-panel-soft text-5xl shadow-inner transition-colors ${
-                phase === "result" && category === "win"
-                  ? "border-success/70 shadow-success/30"
-                  : phase === "result" && category === "near-miss" && i === 2
-                  ? "border-warning/60"
-                  : "border-border"
-              }`}
-              aria-label={`Rolo ${i + 1}: ${s}`}
-            >
-              <motion.span
-                key={s + phase + i}
-                initial={phase === "spinning" ? { y: -30, opacity: 0 } : false}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.18 }}
-              >
-                {s}
-              </motion.span>
-            </motion.div>
+            <Reel
+              key={i}
+              symbol={s}
+              spinning={phase === "spinning"}
+              highlight={phase === "result" && category === "win" ? "win" : phase === "result" && category === "near-miss" && i === 2 ? "near" : null}
+              shake={phase === "result" && category === "near-miss" && i === 2}
+            />
           ))}
           <AnimatePresence>
             {phase === "result" && category === "win" && <Confetti key={pulse} />}
           </AnimatePresence>
+        </div>
+
+        <div className="mb-4 grid grid-cols-6 gap-2" aria-hidden="true">
+          {SYMBOL_KEYS.map((k) => {
+            const R = SYMBOL_RENDER[k];
+            return (
+              <div
+                key={k}
+                title={SYMBOL_LABEL[k]}
+                className="flex flex-col items-center gap-1 rounded-lg border border-border bg-glass p-1.5"
+              >
+                <div className="scale-75"><R /></div>
+                <span className="text-[9px] text-muted-foreground">{SYMBOL_LABEL[k]}</span>
+              </div>
+            );
+          })}
         </div>
 
         <motion.button
@@ -149,7 +195,7 @@ export function SymbolsExperiment() {
           aria-busy={phase === "spinning"}
           whileTap={{ scale: 0.97 }}
           whileHover={phase !== "spinning" ? { scale: 1.01 } : {}}
-          className="w-full rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 font-semibold text-background shadow-lg shadow-primary/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
+          className="w-full rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-3.5 text-base font-semibold text-background shadow-lg shadow-primary/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
         >
           {phase === "spinning" ? "Girando…" : "Girar (simulação)"}
         </motion.button>
