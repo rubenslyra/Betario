@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { LegalRiskSnackbar } from "../components/LegalRiskSnackbar";
 
 function NotFoundComponent() {
   return (
@@ -77,19 +78,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "BET-RAY Lab — Laboratório educacional" },
+      {
+        name: "description",
+        content:
+          "Laboratório educacional sobre probabilidade, UX persuasiva e risco digital. Sem apostas reais.",
+      },
+      { property: "og:title", content: "BET-RAY Lab — Laboratório educacional" },
+      {
+        property: "og:description",
+        content:
+          "Aplicação educacional do projeto @assincronamente. Não é bet, não aceita dinheiro real.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
       },
     ],
   }),
@@ -118,8 +125,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <LegalRiskSnackbar />
     </QueryClientProvider>
   );
 }
