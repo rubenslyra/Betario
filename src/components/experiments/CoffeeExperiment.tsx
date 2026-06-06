@@ -3,6 +3,8 @@ import { useLab } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
+import { PresetManager } from "@/components/PresetManager";
+import { motion, AnimatePresence } from "framer-motion";
 
 const OPTIONS = [
   { label: "25%", value: 25 },
@@ -47,7 +49,7 @@ export function CoffeeExperiment() {
     win: "Quando o sistema parece simples, o usuário tende a confiar mais.",
   };
 
-  const fillHeight = pouring ? "80%" : actual !== null ? `${Math.min(actual, 110)}%` : "0%";
+  const fillTarget = pouring ? 80 : actual ?? 0;
   const diff = guess !== null && actual !== null ? Math.abs(guess - actual) : null;
 
   return (
@@ -61,15 +63,35 @@ export function CoffeeExperiment() {
         </p>
 
         <div
-          className="mx-auto mb-6 flex h-64 items-end justify-center rounded-2xl bg-background/60 p-6 ring-1 ring-border"
+          className="relative mx-auto mb-6 flex h-64 items-end justify-center rounded-2xl bg-background/60 p-6 ring-1 ring-border"
           aria-label="Recipiente do experimento"
           aria-live="polite"
         >
           <div className="relative h-full w-24 overflow-hidden rounded-b-3xl rounded-t-md border-2 border-foreground/20 bg-glass">
-            <div
-              className="absolute bottom-0 w-full transition-all duration-[1400ms]"
-              style={{ height: fillHeight, backgroundColor: "oklch(0.45 0.1 60)" }}
+            <motion.div
+              className="absolute bottom-0 w-full"
+              initial={{ height: "0%" }}
+              animate={{ height: `${Math.min(fillTarget, 110)}%` }}
+              transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+              style={{
+                background:
+                  "linear-gradient(180deg, oklch(0.55 0.12 60) 0%, oklch(0.4 0.1 50) 100%)",
+              }}
             />
+            {/* steam */}
+            <AnimatePresence>
+              {pouring &&
+                [0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: -50 - i * 10, opacity: [0, 0.5, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
+                    className="absolute left-1/2 top-0 h-6 w-1 -translate-x-1/2 rounded-full bg-foreground/30 blur-sm"
+                  />
+                ))}
+            </AnimatePresence>
             {[25, 50, 75, 100].map((m) => (
               <div
                 key={m}
@@ -86,10 +108,11 @@ export function CoffeeExperiment() {
           <legend className="sr-only">Escolha o volume previsto</legend>
           <div className="grid grid-cols-5 gap-2">
             {OPTIONS.map((o) => (
-              <button
+              <motion.button
                 key={o.value}
                 onClick={() => pour(o.value)}
                 disabled={pouring}
+                whileTap={{ scale: 0.95 }}
                 aria-pressed={guess === o.value}
                 className={`rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value
@@ -98,26 +121,34 @@ export function CoffeeExperiment() {
                 } disabled:opacity-50`}
               >
                 {o.label}
-              </button>
+              </motion.button>
             ))}
           </div>
         </fieldset>
 
-        {actual !== null && cat && (
-          <div role="status">
-            <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
-              Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
-              <span className="text-gold">{actual}%</span> · Erro: {diff}%
-            </div>
-            <CharacterReaction
-              mood={cat === "win" ? "happy" : cat === "near-miss" ? "relieved" : "sad"}
-              message={messages[cat]}
-            />
-          </div>
-        )}
+        <AnimatePresence>
+          {actual !== null && cat && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              role="status"
+            >
+              <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
+                Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
+                <span className="text-gold">{actual}%</span> · Erro: {diff}%
+              </div>
+              <CharacterReaction
+                mood={cat === "win" ? "happy" : cat === "near-miss" ? "relieved" : "sad"}
+                message={messages[cat]}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
       <ExperimentControls experiment="coffee" />
+      <PresetManager experiment="coffee" />
       <ExperimentCharts experiment="coffee" />
     </div>
   );

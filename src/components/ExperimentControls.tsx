@@ -51,6 +51,10 @@ export function ExperimentControls({ experiment }: { experiment: ExperimentKey }
   const exp = useLab((s) => s.experiments[experiment]);
   const setParams = useLab((s) => s.setParams);
   const resetExperiment = useLab((s) => s.resetExperiment);
+  const activePresetId = exp.activePresetId;
+  const activePreset = useLab((s) =>
+    activePresetId ? s.presets.find((p) => p.id === activePresetId) : null,
+  );
   const p = exp.params;
 
   return (
@@ -58,10 +62,18 @@ export function ExperimentControls({ experiment }: { experiment: ExperimentKey }
       aria-labelledby={`params-${experiment}`}
       className="glass-panel space-y-4 p-5"
     >
-      <header className="flex items-center justify-between">
-        <h3 id={`params-${experiment}`} className="text-sm font-semibold">
-          Parâmetros — {experimentLabels[experiment]}
-        </h3>
+      <header className="flex items-center justify-between gap-2">
+        <div>
+          <h3 id={`params-${experiment}`} className="text-sm font-semibold">
+            Parâmetros — {experimentLabels[experiment]}
+          </h3>
+          <p className="text-[10px] text-muted-foreground">
+            Preset ativo:{" "}
+            <span className={activePreset ? "text-primary" : "text-muted-foreground"}>
+              {activePreset ? activePreset.name : "personalizado"}
+            </span>
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => resetExperiment(experiment)}
@@ -72,6 +84,7 @@ export function ExperimentControls({ experiment }: { experiment: ExperimentKey }
           Reiniciar
         </button>
       </header>
+
 
       <Slider
         id={`round-${experiment}`}

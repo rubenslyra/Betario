@@ -14,6 +14,15 @@ export type LabStateSnapshot = {
     label: string;
     params: ExperimentParams;
     stats: ExperimentStats;
+    activePresetName: string | null;
+  }>;
+  presets: Array<{
+    id: string;
+    experiment: ExperimentKey;
+    experimentLabel: string;
+    name: string;
+    params: ExperimentParams;
+    createdAt: string;
   }>;
   frictions: FrictionEntry[];
   events: LedgerEvent[];

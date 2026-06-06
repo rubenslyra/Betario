@@ -1,4 +1,16 @@
 import { create } from "zustand";
+import {
+  deletePresetRow,
+  initDb,
+  loadSnapshot,
+  persistBalances,
+  persistEvent,
+  persistExperiment,
+  persistFriction,
+  persistPreset,
+  clearAll,
+  type Preset,
+} from "./sqlite";
 
 export type ExperimentKey = "symbols" | "coffee" | "capacity";
 
@@ -36,10 +48,10 @@ export type Balances = {
 };
 
 export type ExperimentParams = {
-  roundLimit: number; // 0 = unlimited
-  winChance: number; // 0-1
-  nearMissChance: number; // 0-1
-  bonusFraction: number; // R$ given as bonus on deposits < 50
+  roundLimit: number;
+  winChance: number;
+  nearMissChance: number;
+  bonusFraction: number;
 };
 
 export type ExperimentStats = {
@@ -64,12 +76,7 @@ const defaultParams: Record<ExperimentKey, ExperimentParams> = {
 };
 
 const emptyStats: ExperimentStats = {
-  rounds: 0,
-  wins: 0,
-  nearMisses: 0,
-  losses: 0,
-  totalBet: 0,
-  totalPayout: 0,
+  rounds: 0, wins: 0, nearMisses: 0, losses: 0, totalBet: 0, totalPayout: 0,
 };
 
 type Stats = {
@@ -81,45 +88,44 @@ type Stats = {
   frictionEvents: number;
 };
 
+type ExperimentState = {
+  params: ExperimentParams;
+  stats: ExperimentStats;
+  activePresetId: string | null;
+};
+
 type LabState = {
+  ready: boolean;
   balances: Balances;
   events: LedgerEvent[];
   stats: Stats;
   showReflectiveModal: boolean;
-  experiments: Record<ExperimentKey, { params: ExperimentParams; stats: ExperimentStats }>;
+  experiments: Record<ExperimentKey, ExperimentState>;
   frictions: FrictionEntry[];
+  presets: Preset[];
 
+  hydrate: () => Promise<void>;
   deposit: (amount: number) => void;
   registerBet: (amount: number, experiment: ExperimentKey) => void;
-  registerResult: (
-    experiment: ExperimentKey,
-    category: "loss" | "near-miss" | "win",
-    payout: number,
-  ) => void;
+  registerResult: (experiment: ExperimentKey, category: "loss" | "near-miss" | "win", payout: number) => void;
   rollOutcome: (experiment: ExperimentKey) => "loss" | "near-miss" | "win";
   attemptWithdraw: () => string[];
   setParams: (experiment: ExperimentKey, params: Partial<ExperimentParams>) => void;
   resetExperiment: (experiment: ExperimentKey) => void;
   dismissReflective: () => void;
   reset: () => void;
+
+  savePreset: (experiment: ExperimentKey, name: string) => Preset;
+  applyPreset: (id: string) => void;
+  deletePreset: (id: string) => void;
 };
 
 const initialBalances: Balances = {
-  deposited: 50,
-  bonus: 0,
-  visual: 50,
-  withdrawable: 50,
-  blocked: 0,
-  fractional: 0,
+  deposited: 50, bonus: 0, visual: 50, withdrawable: 50, blocked: 0, fractional: 0,
 };
 
 const initialStats: Stats = {
-  rounds: 0,
-  losses: 0,
-  nearMisses: 0,
-  wins: 0,
-  withdrawAttempts: 0,
-  frictionEvents: 0,
+  rounds: 0, losses: 0, nearMisses: 0, wins: 0, withdrawAttempts: 0, frictionEvents: 0,
 };
 
 function uid() {
@@ -136,23 +142,17 @@ function pushEvent(
   target: string,
   note: string,
   experiment?: ExperimentKey,
-): LedgerEvent[] {
-  return [
-    {
-      id: uid(),
-      userId: "user_fict_001",
-      type,
-      amount,
-      beforeBalance: before,
-      afterBalance: after,
-      source,
-      target,
-      timestamp: new Date().toISOString(),
-      note,
-      experiment,
-    },
-    ...events,
-  ].slice(0, 400);
+): { events: LedgerEvent[]; created: LedgerEvent } {
+  const created: LedgerEvent = {
+    id: uid(),
+    userId: "user_fict_001",
+    type, amount,
+    beforeBalance: before, afterBalance: after,
+    source, target,
+    timestamp: new Date().toISOString(),
+    note, experiment,
+  };
+  return { events: [created, ...events].slice(0, 400), created };
 }
 
 export function calculateEducationalBonus(deposit: number, fraction: number): number {
@@ -160,30 +160,77 @@ export function calculateEducationalBonus(deposit: number, fraction: number): nu
   return 0;
 }
 
+const initialExperiments: Record<ExperimentKey, ExperimentState> = {
+  symbols: { params: defaultParams.symbols, stats: { ...emptyStats }, activePresetId: null },
+  coffee: { params: defaultParams.coffee, stats: { ...emptyStats }, activePresetId: null },
+  capacity: { params: defaultParams.capacity, stats: { ...emptyStats }, activePresetId: null },
+};
+
 export const useLab = create<LabState>((set, get) => ({
+  ready: false,
   balances: initialBalances,
-  events: [
-    {
-      id: uid(),
-      userId: "user_fict_001",
-      type: "DEPOSITO_FICTICIO",
-      amount: 50,
-      beforeBalance: 0,
-      afterBalance: 50,
-      source: "wallet_ficticia",
-      target: "saldo_visual",
-      timestamp: new Date().toISOString(),
-      note: "Saldo inicial fictício para fins didáticos.",
-    },
-  ],
+  events: [],
   stats: initialStats,
   showReflectiveModal: false,
-  experiments: {
-    symbols: { params: defaultParams.symbols, stats: { ...emptyStats } },
-    coffee: { params: defaultParams.coffee, stats: { ...emptyStats } },
-    capacity: { params: defaultParams.capacity, stats: { ...emptyStats } },
-  },
+  experiments: initialExperiments,
   frictions: [],
+  presets: [],
+
+  hydrate: async () => {
+    try {
+      await initDb();
+      const snap = await loadSnapshot();
+      const experiments: Record<ExperimentKey, ExperimentState> = { ...initialExperiments };
+      (Object.keys(experiments) as ExperimentKey[]).forEach((k) => {
+        const loaded = snap.experiments[k];
+        if (loaded) experiments[k] = loaded;
+      });
+      // Derive aggregate stats from per-experiment stats and events
+      const aggregate: Stats = {
+        rounds: 0, wins: 0, losses: 0, nearMisses: 0, withdrawAttempts: 0, frictionEvents: 0,
+      };
+      (Object.keys(experiments) as ExperimentKey[]).forEach((k) => {
+        aggregate.rounds += experiments[k].stats.rounds;
+        aggregate.wins += experiments[k].stats.wins;
+        aggregate.losses += experiments[k].stats.losses;
+        aggregate.nearMisses += experiments[k].stats.nearMisses;
+      });
+      aggregate.frictionEvents = snap.frictions.length;
+      aggregate.withdrawAttempts = snap.events.filter((e) => e.type === "TENTATIVA_SAQUE").length;
+
+      set({
+        ready: true,
+        balances: snap.balances ?? initialBalances,
+        events: snap.events,
+        frictions: snap.frictions,
+        experiments,
+        presets: snap.presets,
+        stats: aggregate,
+      });
+
+      // Seed initial deposit event for first-time visitors
+      if (!snap.balances && snap.events.length === 0) {
+        const seed: LedgerEvent = {
+          id: uid(),
+          userId: "user_fict_001",
+          type: "DEPOSITO_FICTICIO",
+          amount: 50, beforeBalance: 0, afterBalance: 50,
+          source: "wallet_ficticia", target: "saldo_visual",
+          timestamp: new Date().toISOString(),
+          note: "Saldo inicial fictício para fins didáticos.",
+        };
+        set({ events: [seed] });
+        persistEvent(seed);
+        persistBalances(initialBalances);
+        (Object.keys(experiments) as ExperimentKey[]).forEach((k) => {
+          persistExperiment(k, experiments[k].params, experiments[k].stats, null);
+        });
+      }
+    } catch (e) {
+      console.warn("[lab-store] hydrate failed, running in-memory", e);
+      set({ ready: true });
+    }
+  },
 
   deposit: (amount) => {
     const b = get().balances;
@@ -197,39 +244,28 @@ export const useLab = create<LabState>((set, get) => ({
     const newVisual = newDeposited + newBonus;
     const newFractional = newBonus % 1;
 
-    let events = pushEvent(
-      get().events,
-      "DEPOSITO_FICTICIO",
-      amount,
-      before,
-      newVisual,
-      "wallet_ficticia",
-      "saldo_visual",
+    const r1 = pushEvent(
+      get().events, "DEPOSITO_FICTICIO", amount, before, newVisual,
+      "wallet_ficticia", "saldo_visual",
       `Depósito fictício de R$${amount.toFixed(2)}.`,
     );
+    persistEvent(r1.created);
+    let events = r1.events;
     if (bonus > 0) {
-      events = pushEvent(
-        events,
-        "BONUS_SIMULADO",
-        bonus,
-        newVisual - bonus,
-        newVisual,
-        "promo_simulada",
-        "saldo_bonus",
+      const r2 = pushEvent(
+        events, "BONUS_SIMULADO", bonus, newVisual - bonus, newVisual,
+        "promo_simulada", "saldo_bonus",
         `Bônus fracionado simulado de R$${bonus.toFixed(2)} (não sacável).`,
       );
+      persistEvent(r2.created);
+      events = r2.events;
     }
-    set({
-      balances: {
-        deposited: newDeposited,
-        bonus: newBonus,
-        visual: newVisual,
-        withdrawable: newWithdrawable,
-        blocked: newBlocked,
-        fractional: newFractional,
-      },
-      events,
-    });
+    const balances: Balances = {
+      deposited: newDeposited, bonus: newBonus, visual: newVisual,
+      withdrawable: newWithdrawable, blocked: newBlocked, fractional: newFractional,
+    };
+    persistBalances(balances);
+    set({ balances, events });
   },
 
   registerBet: (amount, experiment) => {
@@ -239,26 +275,21 @@ export const useLab = create<LabState>((set, get) => ({
     const newVisual = b.visual - amount;
     const newWithdrawable = Math.max(0, b.withdrawable - amount);
     const exp = get().experiments[experiment];
+    const r = pushEvent(
+      get().events, "APOSTA_FICTICIA", amount, before, newVisual,
+      "saldo_visual", "pool_simulada",
+      `Aposta fictícia de R$${amount.toFixed(2)}.`, experiment,
+    );
+    const balances = { ...b, visual: newVisual, withdrawable: newWithdrawable };
+    const newExp: ExperimentState = {
+      ...exp, stats: { ...exp.stats, totalBet: exp.stats.totalBet + amount },
+    };
+    persistBalances(balances);
+    persistEvent(r.created);
+    persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({
-      balances: { ...b, visual: newVisual, withdrawable: newWithdrawable },
-      events: pushEvent(
-        get().events,
-        "APOSTA_FICTICIA",
-        amount,
-        before,
-        newVisual,
-        "saldo_visual",
-        "pool_simulada",
-        `Aposta fictícia de R$${amount.toFixed(2)}.`,
-        experiment,
-      ),
-      experiments: {
-        ...get().experiments,
-        [experiment]: {
-          ...exp,
-          stats: { ...exp.stats, totalBet: exp.stats.totalBet + amount },
-        },
-      },
+      balances, events: r.events,
+      experiments: { ...get().experiments, [experiment]: newExp },
     });
   },
 
@@ -297,35 +328,27 @@ export const useLab = create<LabState>((set, get) => ({
       totalBet: exp.stats.totalBet,
       totalPayout: exp.stats.totalPayout + payout,
     };
+    const newExp: ExperimentState = { ...exp, stats: newExpStats };
 
     const reachedLimit =
       exp.params.roundLimit > 0 && newExpStats.rounds % exp.params.roundLimit === 0;
 
+    const r = pushEvent(
+      get().events, "RESULTADO_SIMULADO", payout, before, newVisual,
+      "pool_simulada", "saldo_visual",
+      `Resultado demonstrativo (${category}). Payout fictício R$${payout.toFixed(2)}.`,
+      experiment,
+    );
+    const balances: Balances = {
+      deposited: newDeposited, bonus: newBonus, visual: newVisual,
+      withdrawable: newWithdrawable, blocked: newBlocked, fractional: newBonus % 1,
+    };
+    persistBalances(balances);
+    persistEvent(r.created);
+    persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({
-      balances: {
-        deposited: newDeposited,
-        bonus: newBonus,
-        visual: newVisual,
-        withdrawable: newWithdrawable,
-        blocked: newBlocked,
-        fractional: newBonus % 1,
-      },
-      events: pushEvent(
-        get().events,
-        "RESULTADO_SIMULADO",
-        payout,
-        before,
-        newVisual,
-        "pool_simulada",
-        "saldo_visual",
-        `Resultado demonstrativo (${category}). Payout fictício R$${payout.toFixed(2)}.`,
-        experiment,
-      ),
-      stats: newStats,
-      experiments: {
-        ...get().experiments,
-        [experiment]: { params: exp.params, stats: newExpStats },
-      },
+      balances, events: r.events, stats: newStats,
+      experiments: { ...get().experiments, [experiment]: newExp },
       showReflectiveModal: reachedLimit || newStats.rounds % 10 === 0,
     });
   },
@@ -335,73 +358,108 @@ export const useLab = create<LabState>((set, get) => ({
     const alerts: string[] = [];
     if (b.bonus > 0) alerts.push("Fricção detectada: o saldo visual inclui bônus não sacável.");
     if (b.withdrawable % 1 !== 0 || b.fractional > 0)
-      alerts.push(
-        "Fricção detectada: o saldo possui centavos, mas a regra simulada permite apenas saque inteiro.",
-      );
+      alerts.push("Fricção detectada: o saldo possui centavos, mas a regra simulada permite apenas saque inteiro.");
     alerts.push("Fricção detectada: o usuário não pode escolher saque parcial.");
 
     const stats = get().stats;
     const ts = new Date().toISOString();
-    const newFrictions: FrictionEntry[] = [
-      ...alerts.map((m) => ({ id: uid(), timestamp: ts, message: m })),
-      ...get().frictions,
-    ].slice(0, 200);
+    const newEntries: FrictionEntry[] = alerts.map((m) => ({ id: uid(), timestamp: ts, message: m }));
+    newEntries.forEach(persistFriction);
+    const frictions = [...newEntries, ...get().frictions].slice(0, 200);
 
+    const r = pushEvent(
+      get().events, "TENTATIVA_SAQUE", b.withdrawable, b.visual, b.visual,
+      "saldo_sacavel", "wallet_ficticia",
+      `Tentativa de saque fictício. ${alerts.length} fricção(ões) detectada(s).`,
+    );
+    persistEvent(r.created);
     set({
       stats: {
         ...stats,
         withdrawAttempts: stats.withdrawAttempts + 1,
         frictionEvents: stats.frictionEvents + alerts.length,
       },
-      events: pushEvent(
-        get().events,
-        "TENTATIVA_SAQUE",
-        b.withdrawable,
-        b.visual,
-        b.visual,
-        "saldo_sacavel",
-        "wallet_ficticia",
-        `Tentativa de saque fictício. ${alerts.length} fricção(ões) detectada(s).`,
-      ),
-      frictions: newFrictions,
+      events: r.events, frictions,
     });
     return alerts;
   },
 
   setParams: (experiment, partial) => {
     const exp = get().experiments[experiment];
-    set({
-      experiments: {
-        ...get().experiments,
-        [experiment]: { ...exp, params: { ...exp.params, ...partial } },
-      },
-    });
+    const newExp: ExperimentState = {
+      ...exp,
+      params: { ...exp.params, ...partial },
+      activePresetId: null, // manual edit detaches preset
+    };
+    persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
+    set({ experiments: { ...get().experiments, [experiment]: newExp } });
   },
 
   resetExperiment: (experiment) => {
     const exp = get().experiments[experiment];
-    set({
-      experiments: {
-        ...get().experiments,
-        [experiment]: { params: exp.params, stats: { ...emptyStats } },
-      },
-    });
+    const newExp: ExperimentState = { ...exp, stats: { ...emptyStats } };
+    persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
+    set({ experiments: { ...get().experiments, [experiment]: newExp } });
   },
 
   dismissReflective: () => set({ showReflectiveModal: false }),
 
-  reset: () =>
+  reset: () => {
+    clearAll();
+    persistBalances(initialBalances);
+    (Object.keys(initialExperiments) as ExperimentKey[]).forEach((k) => {
+      persistExperiment(k, initialExperiments[k].params, initialExperiments[k].stats, null);
+    });
     set({
       balances: initialBalances,
-      events: [],
-      stats: initialStats,
-      frictions: [],
-      experiments: {
-        symbols: { params: defaultParams.symbols, stats: { ...emptyStats } },
-        coffee: { params: defaultParams.coffee, stats: { ...emptyStats } },
-        capacity: { params: defaultParams.capacity, stats: { ...emptyStats } },
-      },
-    }),
+      events: [], stats: initialStats, frictions: [],
+      experiments: initialExperiments,
+    });
+  },
+
+  savePreset: (experiment, name) => {
+    const exp = get().experiments[experiment];
+    const preset: Preset = {
+      id: uid(),
+      experiment,
+      name: name.trim() || `Preset ${get().presets.length + 1}`,
+      params: { ...exp.params },
+      createdAt: new Date().toISOString(),
+    };
+    persistPreset(preset);
+    const newExp: ExperimentState = { ...exp, activePresetId: preset.id };
+    persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
+    set({
+      presets: [preset, ...get().presets],
+      experiments: { ...get().experiments, [experiment]: newExp },
+    });
+    return preset;
+  },
+
+  applyPreset: (id) => {
+    const preset = get().presets.find((p) => p.id === id);
+    if (!preset) return;
+    const exp = get().experiments[preset.experiment];
+    const newExp: ExperimentState = {
+      ...exp, params: { ...preset.params }, activePresetId: preset.id,
+    };
+    persistExperiment(preset.experiment, newExp.params, newExp.stats, newExp.activePresetId);
+    set({ experiments: { ...get().experiments, [preset.experiment]: newExp } });
+  },
+
+  deletePreset: (id) => {
+    deletePresetRow(id);
+    const presets = get().presets.filter((p) => p.id !== id);
+    const exps = { ...get().experiments };
+    (Object.keys(exps) as ExperimentKey[]).forEach((k) => {
+      if (exps[k].activePresetId === id) {
+        const cleared: ExperimentState = { ...exps[k], activePresetId: null };
+        exps[k] = cleared;
+        persistExperiment(k, cleared.params, cleared.stats, null);
+      }
+    });
+    set({ presets, experiments: exps });
+  },
 }));
 
 export const experimentLabels: Record<ExperimentKey, string> = {
