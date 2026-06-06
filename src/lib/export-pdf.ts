@@ -61,14 +61,15 @@ export function exportReportPdf(snap: LabStateSnapshot) {
   // Experiments
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Experimentos — parâmetros e resultados", margin, y);
+  doc.text("Experimentos — parâmetros, preset e resultados", margin, y);
   autoTable(doc, {
     startY: y + 6,
     head: [
-      ["Experimento", "Rodadas", "Acertos", "Quase", "Perdas", "P(win)", "Limite", "Bônus"],
+      ["Experimento", "Preset ativo", "Rodadas", "Acertos", "Quase", "Perdas", "P(win)", "Limite", "Bônus"],
     ],
     body: snap.experiments.map((e) => [
       e.label,
+      e.activePresetName ?? "personalizado",
       e.stats.rounds.toString(),
       e.stats.wins.toString(),
       e.stats.nearMisses.toString(),
@@ -82,6 +83,32 @@ export function exportReportPdf(snap: LabStateSnapshot) {
     margin: { left: margin, right: margin },
   });
   y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 18;
+
+  // Saved presets catalogue
+  if (snap.presets.length > 0) {
+    if (y > 680) { doc.addPage(); y = margin; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Presets salvos", margin, y);
+    autoTable(doc, {
+      startY: y + 6,
+      head: [["Experimento", "Nome", "P(win)", "P(quase)", "Limite", "Bônus", "Criado em"]],
+      body: snap.presets.map((p) => [
+        p.experimentLabel,
+        p.name,
+        `${(p.params.winChance * 100).toFixed(0)}%`,
+        `${(p.params.nearMissChance * 100).toFixed(0)}%`,
+        p.params.roundLimit === 0 ? "—" : String(p.params.roundLimit),
+        `R$ ${p.params.bonusFraction.toFixed(2)}`,
+        new Date(p.createdAt).toLocaleString("pt-BR"),
+      ]),
+      headStyles: { fillColor: [245, 196, 0], textColor: 30 },
+      styles: { fontSize: 9 },
+      margin: { left: margin, right: margin },
+    });
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 18;
+  }
+
 
   // Friction events
   if (y > 700) {
