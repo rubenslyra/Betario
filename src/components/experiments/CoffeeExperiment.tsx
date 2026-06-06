@@ -5,6 +5,7 @@ import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlassMug, CoffeePot } from "@/components/illustrations/Scene";
 
 const OPTIONS = [
   { label: "25%", value: 25 },
@@ -40,13 +41,13 @@ export function CoffeeExperiment() {
       setCat(outcome);
       setPouring(false);
       registerResult("coffee", outcome, outcome === "win" ? 5 : 0);
-    }, 1500);
+    }, 1700);
   };
 
   const messages = {
-    loss: "Previsões visuais parecem fáceis, mas pequenas variações mudam o resultado.",
-    "near-miss": "A percepção de controle pode ser maior do que o controle real.",
-    win: "Quando o sistema parece simples, o usuário tende a confiar mais.",
+    loss: "Observe o resultado.",
+    "near-miss": "Foi perto, mas quase acerto não é garantia.",
+    win: "Boa leitura! Agora compare com o relatório.",
   };
 
   const fillTarget = pouring ? 80 : actual ?? 0;
@@ -54,53 +55,37 @@ export function CoffeeExperiment() {
 
   return (
     <div className="space-y-6">
-      <section className="glass-panel p-6" aria-labelledby="coffee-heading">
+      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="coffee-heading">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, oklch(0.55 0.12 60 / 0.18), transparent 55%), radial-gradient(circle at 80% 70%, oklch(0.85 0.17 92 / 0.1), transparent 50%)",
+          }}
+        />
         <h2 id="coffee-heading" className="mb-1 text-lg font-semibold">
-          Medida do café
+          Medida do café <span className="ml-2 rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber">Cafeteria educativa</span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
-          Aposta fictícia de R$1,00. Preveja o volume servido.
+          Aposta fictícia de R$1,00. Preveja quanto a jarra vai derramar.
         </p>
 
+        {/* scene */}
         <div
-          className="relative mx-auto mb-6 flex h-64 items-end justify-center rounded-2xl bg-background/60 p-6 ring-1 ring-border"
-          aria-label="Recipiente do experimento"
+          className="relative mx-auto mb-6 flex h-80 items-end justify-center rounded-3xl border border-border bg-gradient-to-b from-background/40 to-amber/10 p-6 shadow-inner"
+          aria-label="Cena da cafeteria"
           aria-live="polite"
         >
-          <div className="relative h-full w-24 overflow-hidden rounded-b-3xl rounded-t-md border-2 border-foreground/20 bg-glass">
-            <motion.div
-              className="absolute bottom-0 w-full"
-              initial={{ height: "0%" }}
-              animate={{ height: `${Math.min(fillTarget, 110)}%` }}
-              transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-              style={{
-                background:
-                  "linear-gradient(180deg, oklch(0.55 0.12 60) 0%, oklch(0.4 0.1 50) 100%)",
-              }}
-            />
-            {/* steam */}
-            <AnimatePresence>
-              {pouring &&
-                [0, 1, 2].map((i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: -50 - i * 10, opacity: [0, 0.5, 0] }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.3 }}
-                    className="absolute left-1/2 top-0 h-6 w-1 -translate-x-1/2 rounded-full bg-foreground/30 blur-sm"
-                  />
-                ))}
-            </AnimatePresence>
-            {[25, 50, 75, 100].map((m) => (
-              <div
-                key={m}
-                className="absolute left-0 right-0 border-t border-foreground/20 text-[9px] text-muted-foreground"
-                style={{ bottom: `${m}%` }}
-              >
-                <span className="ml-1">{m}%</span>
-              </div>
-            ))}
+          {/* table */}
+          <div className="absolute bottom-3 left-3 right-3 h-6 rounded-md bg-gradient-to-b from-[#8b5a2b] to-[#5a3618] opacity-80 shadow-lg" aria-hidden />
+          <div className="relative">
+            <GlassMug level={fillTarget} pouring={pouring} />
+            <CoffeePot pouring={pouring} />
+          </div>
+          {/* lab notes */}
+          <div className="absolute right-3 top-3 hidden rounded-md border border-border bg-glass px-2 py-1 font-mono text-[10px] text-muted-foreground sm:block">
+            obs: marcações 25/50/75/100%
           </div>
         </div>
 
@@ -113,10 +98,11 @@ export function CoffeeExperiment() {
                 onClick={() => pour(o.value)}
                 disabled={pouring}
                 whileTap={{ scale: 0.95 }}
+                whileHover={!pouring ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}
-                className={`rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`rounded-xl border px-2 py-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value
-                    ? "border-primary bg-primary/15 text-primary"
+                    ? "border-amber bg-amber/15 text-amber"
                     : "border-border bg-glass text-muted-foreground hover:text-foreground"
                 } disabled:opacity-50`}
               >
@@ -134,7 +120,7 @@ export function CoffeeExperiment() {
               exit={{ opacity: 0 }}
               role="status"
             >
-              <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
+              <div className="mb-3 rounded-xl bg-panel-soft/60 p-3 text-center font-mono text-sm">
                 Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
                 <span className="text-gold">{actual}%</span> · Erro: {diff}%
               </div>

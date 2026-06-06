@@ -5,6 +5,7 @@ import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
 import { motion, AnimatePresence } from "framer-motion";
+import { GlassJar } from "@/components/illustrations/Scene";
 
 const OPTIONS = [
   { label: "25%", value: 25 },
@@ -12,6 +13,37 @@ const OPTIONS = [
   { label: "Quase cheio", value: 85 },
   { label: "Transbordar", value: 110 },
 ];
+
+const PEBBLE_COLORS = ["#5fbedc", "#7fb069", "#c9a84c", "#e63946", "#a78bfa"];
+
+function FallingPebbles({ filling }: { filling: boolean }) {
+  if (!filling) return null;
+  return (
+    <>
+      {Array.from({ length: 12 }).map((_, i) => {
+        const left = 15 + Math.random() * 70;
+        const color = PEBBLE_COLORS[i % PEBBLE_COLORS.length];
+        const shape = i % 3;
+        return (
+          <motion.span
+            key={i}
+            initial={{ y: -40, opacity: 0, rotate: 0 }}
+            animate={{ y: 220, opacity: [0, 1, 1, 0.6], rotate: 360 }}
+            transition={{ duration: 1.6, delay: i * 0.1, ease: "easeIn" }}
+            className="absolute top-0 h-3 w-3"
+            style={{
+              left: `${left}%`,
+              background: color,
+              borderRadius: shape === 0 ? "50%" : shape === 1 ? "3px" : "30%",
+              boxShadow: `0 2px 6px ${color}88`,
+            }}
+            aria-hidden="true"
+          />
+        );
+      })}
+    </>
+  );
+}
 
 export function CapacityExperiment() {
   const [guess, setGuess] = useState<number | null>(null);
@@ -40,13 +72,13 @@ export function CapacityExperiment() {
       setCat(outcome);
       setFilling(false);
       registerResult("capacity", outcome, outcome === "win" ? 5 : 0);
-    }, 1500);
+    }, 1700);
   };
 
   const messages = {
-    loss: "A percepção visual pode superestimar ou subestimar quantidades.",
-    "near-miss": "Erro de estimativa é comum quando volume e aleatoriedade se misturam.",
-    win: "Interfaces podem transformar incerteza em sensação de escolha.",
+    loss: "Observe o resultado.",
+    "near-miss": "Foi perto, mas quase acerto não é garantia.",
+    win: "Boa leitura! Agora compare com o relatório.",
   };
 
   const fillTarget = filling ? 70 : actual ?? 0;
@@ -54,42 +86,37 @@ export function CapacityExperiment() {
 
   return (
     <div className="space-y-6">
-      <section className="glass-panel p-6" aria-labelledby="capacity-heading">
+      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="capacity-heading">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 25% 25%, oklch(0.78 0.17 145 / 0.16), transparent 50%), radial-gradient(circle at 80% 75%, oklch(0.72 0.16 235 / 0.14), transparent 50%)",
+          }}
+        />
         <h2 id="capacity-heading" className="mb-1 text-lg font-semibold">
-          Quantos cabem?
+          Quantos cabem? <span className="ml-2 rounded-full bg-success/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">Laboratório escolar</span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
           Aposta fictícia de R$1,00. Estime quanto cabe no pote.
         </p>
 
         <div
-          className="mx-auto mb-6 flex h-64 items-end justify-center rounded-2xl bg-background/60 p-6 ring-1 ring-border"
-          aria-label="Pote do experimento"
+          className="relative mx-auto mb-6 flex h-80 items-end justify-center rounded-3xl border border-border bg-gradient-to-b from-background/40 to-success/10 p-6 shadow-inner"
+          aria-label="Bancada do experimento"
           aria-live="polite"
         >
-          <div className="relative h-full w-32 overflow-hidden rounded-2xl border-2 border-foreground/20 bg-glass">
-            <motion.div
-              className="absolute bottom-0 w-full"
-              initial={{ height: "0%" }}
-              animate={{ height: `${Math.min(fillTarget, 105)}%` }}
-              transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle at 20% 30%, oklch(0.78 0.16 75) 3px, transparent 4px), radial-gradient(circle at 70% 60%, oklch(0.85 0.17 92) 3px, transparent 4px), radial-gradient(circle at 50% 80%, oklch(0.72 0.16 235) 3px, transparent 4px)",
-                backgroundSize: "16px 16px",
-                backgroundColor: "oklch(0.35 0.05 250)",
-              }}
-            />
-            {filling &&
-              [0, 1, 2, 3].map((i) => (
-                <motion.span
-                  key={i}
-                  initial={{ y: -10, x: `${20 + i * 20}%`, opacity: 0 }}
-                  animate={{ y: 220, opacity: [0, 1, 0] }}
-                  transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18 }}
-                  className="absolute left-0 top-0 h-2 w-2 rounded-full bg-gold/70"
-                />
-              ))}
+          {/* table */}
+          <div className="absolute bottom-3 left-3 right-3 h-5 rounded-md bg-gradient-to-b from-[#b08560] to-[#6a4f31] opacity-80" aria-hidden />
+          <div className="relative">
+            <GlassJar level={fillTarget}>
+              <FallingPebbles filling={filling} />
+            </GlassJar>
+          </div>
+          {/* counter */}
+          <div className="absolute right-3 top-3 rounded-md border border-border bg-glass px-2 py-1 font-mono text-[11px] text-muted-foreground">
+            nível: {Math.round(fillTarget)}%
           </div>
         </div>
 
@@ -102,10 +129,11 @@ export function CapacityExperiment() {
                 onClick={() => fill(o.value)}
                 disabled={filling}
                 whileTap={{ scale: 0.95 }}
+                whileHover={!filling ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}
-                className={`rounded-lg border px-2 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`rounded-xl border px-2 py-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value
-                    ? "border-primary bg-primary/15 text-primary"
+                    ? "border-success bg-success/15 text-success"
                     : "border-border bg-glass text-muted-foreground hover:text-foreground"
                 } disabled:opacity-50`}
               >
@@ -123,7 +151,7 @@ export function CapacityExperiment() {
               exit={{ opacity: 0 }}
               role="status"
             >
-              <div className="mb-3 rounded-lg bg-panel-soft/60 p-3 text-center font-mono text-sm">
+              <div className="mb-3 rounded-xl bg-panel-soft/60 p-3 text-center font-mono text-sm">
                 Previsão: <span className="text-primary">{guess}%</span> · Real:{" "}
                 <span className="text-gold">{actual}%</span> · Erro: {diff}%
               </div>

@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LegalRiskSnackbar } from "../components/LegalRiskSnackbar";
+import { AudioController } from "../components/AudioController";
 
 function NotFoundComponent() {
   return (
@@ -127,6 +128,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <LegalRiskSnackbar />
+      <AudioController />
     </QueryClientProvider>
   );
 }
