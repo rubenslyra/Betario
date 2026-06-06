@@ -3,6 +3,8 @@ import { EducationalBanner } from "./EducationalBanner";
 import { ReflectiveModal } from "./ReflectiveModal";
 import { Beaker, BookOpen, FileText, FlaskConical, Home, ScrollText } from "lucide-react";
 import type { ReactNode } from "react";
+import { useHydrateLab } from "@/hooks/use-hydrate-lab";
+
 
 const navItems = [
   { to: "/", label: "Início", icon: Home },
@@ -14,6 +16,8 @@ const navItems = [
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useHydrateLab();
+
 
   return (
     <div className="min-h-dvh">
