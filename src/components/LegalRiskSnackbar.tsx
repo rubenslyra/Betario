@@ -32,16 +32,21 @@ export function LegalRiskSnackbar() {
 
   if (!visible) return null;
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 animate-fade-up">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed bottom-4 left-1/2 z-50 w-[min(560px,calc(100vw-2rem))] -translate-x-1/2 animate-fade-up"
+    >
       <div className="glass-panel flex items-start gap-3 p-3 pr-2">
-        <Scale className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+        <Scale className="mt-0.5 h-4 w-4 shrink-0 text-gold" aria-hidden="true" />
         <p className="flex-1 text-[12px] leading-snug text-foreground/90">{message}</p>
         <button
+          type="button"
           onClick={() => setVisible(false)}
-          className="rounded p-1 text-muted-foreground hover:bg-glass hover:text-foreground"
-          aria-label="Fechar aviso"
+          className="rounded p-1 text-muted-foreground hover:bg-glass hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="Fechar aviso legal"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       </div>
     </div>
