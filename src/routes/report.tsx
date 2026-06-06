@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { experimentLabels, useLab, type ExperimentKey } from "@/lib/lab-store";
-import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Download } from "lucide-react";
+import { useHydrateLab } from "@/hooks/use-hydrate-lab";
+import { useMemo, useState, useRef } from "react";
+import { AlertTriangle, CheckCircle2, Download, Database, Upload } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -17,11 +18,14 @@ import {
   YAxis,
 } from "recharts";
 import { exportReportPdf } from "@/lib/export-pdf";
+import { downloadDb, importDb } from "@/lib/sqlite";
+import { AccessibleChartTable } from "@/components/AccessibleChartTable";
 
 export const Route = createFileRoute("/report")({
   head: () => ({ meta: [{ title: "Relatório crítico · BET-RAY Lab" }] }),
   component: ReportPage,
 });
+
 
 function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -45,13 +49,16 @@ const ledgerColors = {
 } as const;
 
 function ReportPage() {
+  useHydrateLab();
   const balances = useLab((s) => s.balances);
   const stats = useLab((s) => s.stats);
   const events = useLab((s) => s.events);
   const experiments = useLab((s) => s.experiments);
+  const presets = useLab((s) => s.presets);
   const frictions = useLab((s) => s.frictions);
   const attemptWithdraw = useLab((s) => s.attemptWithdraw);
   const [alerts, setAlerts] = useState<string[] | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const tryWithdraw = () => setAlerts(attemptWithdraw());
 
@@ -75,15 +82,35 @@ function ReportPage() {
   const handleExport = () => {
     exportReportPdf({
       balances,
-      experiments: (Object.keys(experiments) as ExperimentKey[]).map((k) => ({
-        key: k,
-        label: experimentLabels[k],
-        params: experiments[k].params,
-        stats: experiments[k].stats,
+      experiments: (Object.keys(experiments) as ExperimentKey[]).map((k) => {
+        const activeId = experiments[k].activePresetId;
+        const active = activeId ? presets.find((p) => p.id === activeId) : null;
+        return {
+          key: k,
+          label: experimentLabels[k],
+          params: experiments[k].params,
+          stats: experiments[k].stats,
+          activePresetName: active?.name ?? null,
+        };
+      }),
+      presets: presets.map((p) => ({
+        id: p.id,
+        experiment: p.experiment,
+        experimentLabel: experimentLabels[p.experiment],
+        name: p.name,
+        params: p.params,
+        createdAt: p.createdAt,
       })),
       frictions,
       events,
     });
+  };
+
+  const handleImport = async (file: File | null) => {
+    if (!file) return;
+    await importDb(file);
+    // Re-hydrate by forcing reload (simpler than re-running store hydrate)
+    window.location.reload();
   };
 
   return (
@@ -92,19 +119,49 @@ function ReportPage() {
         <div>
           <h1 className="text-3xl font-bold">Relatório crítico</h1>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-            Visão agregada do comportamento simulado. Nenhum valor real envolvido.
+            Visão agregada do comportamento simulado. Persistência local em
+            SQLite (sql.js) — nada sai do seu navegador.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-sm font-semibold text-background shadow-lg shadow-primary/30 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          aria-label="Exportar relatório educacional como PDF"
-        >
-          <Download className="h-4 w-4" aria-hidden="true" />
-          Exportar PDF
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => downloadDb()}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-glass px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Baixar banco SQLite portável"
+          >
+            <Database className="h-3.5 w-3.5" aria-hidden="true" />
+            Exportar .sqlite
+          </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-glass px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Importar banco SQLite"
+          >
+            <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+            Importar .sqlite
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".sqlite,application/x-sqlite3,application/octet-stream"
+            className="hidden"
+            onChange={(e) => handleImport(e.target.files?.[0] ?? null)}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-2.5 text-sm font-semibold text-background shadow-lg shadow-primary/30 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Exportar relatório educacional como PDF"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Exportar PDF
+          </button>
+        </div>
       </div>
+
 
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gold">
         Métricas fictícias
