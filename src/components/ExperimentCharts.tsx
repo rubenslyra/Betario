@@ -14,6 +14,7 @@ import {
 import type { ExperimentKey } from "@/lib/lab-store";
 import { useLab, experimentLabels } from "@/lib/lab-store";
 import { useMemo } from "react";
+import { AccessibleChartTable } from "./AccessibleChartTable";
 
 const palette = {
   win: "oklch(0.78 0.17 145)",
@@ -49,7 +50,6 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
   }, [exp]);
 
   const cumulative = useMemo(() => {
-    // chronological
     const results = events
       .filter((e) => e.type === "RESULTADO_SIMULADO")
       .slice()
@@ -59,18 +59,35 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
     let near = 0;
     return results.map((e, i) => {
       const cat = e.note.match(/\((loss|near-miss|win)\)/)?.[1];
-      bet += 1; // each result preceded by a 1-real bet
+      bet += 1;
       payout += e.amount;
       if (cat === "near-miss") near += 1;
       return {
         round: i + 1,
         nearCumulative: near,
         netResult: Number((payout - bet).toFixed(2)),
+        category: cat ?? "—",
       };
     });
   }, [events]);
 
   const empty = exp.stats.rounds === 0;
+
+  const evoSummary = empty
+    ? "Sem dados ainda."
+    : `Frequência esperada versus observada após ${exp.stats.rounds} rodadas. ` +
+      expectedVsObserved
+        .map(
+          (d) =>
+            `${d.label}: esperado ${d.expected.toFixed(1)}%, observado ${d.observed.toFixed(1)}%.`,
+        )
+        .join(" ");
+
+  const cumSummary = empty
+    ? "Sem rodadas registradas."
+    : `Evolução cumulativa de ${cumulative.length} rodadas. Quase acertos acumulados: ${
+        cumulative[cumulative.length - 1]?.nearCumulative ?? 0
+      }. Resultado líquido final fictício: R$ ${(cumulative[cumulative.length - 1]?.netResult ?? 0).toFixed(2)}.`;
 
   return (
     <section
@@ -97,15 +114,15 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
               Frequência esperada vs observada (%)
             </h4>
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={expectedVsObserved}>
+              <BarChart data={expectedVsObserved} aria-hidden="true">
                 <CartesianGrid stroke="oklch(1 0 0 / 0.08)" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  stroke="oklch(0.75 0.02 245)"
+                  stroke="oklch(0.78 0.02 245)"
                   fontSize={11}
                   tickLine={false}
                 />
-                <YAxis stroke="oklch(0.75 0.02 245)" fontSize={11} tickLine={false} />
+                <YAxis stroke="oklch(0.78 0.02 245)" fontSize={11} tickLine={false} />
                 <Tooltip
                   contentStyle={{
                     background: "oklch(0.22 0.04 250)",
@@ -117,7 +134,7 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="expected" name="Esperado" fill={palette.primary} radius={4} />
                 <Bar dataKey="observed" name="Observado" radius={4}>
-                  {expectedVsObserved.map((d, i) => (
+                  {expectedVsObserved.map((_, i) => (
                     <Cell
                       key={i}
                       fill={i === 0 ? palette.win : i === 1 ? palette.near : palette.loss}
@@ -126,6 +143,17 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            <AccessibleChartTable
+              title="Frequência esperada vs observada"
+              caption="Tabela equivalente ao gráfico de barras acima."
+              summary={evoSummary}
+              columns={[
+                { key: "label", label: "Categoria" },
+                { key: "expected", label: "Esperado (%)", numeric: true, format: (v) => Number(v).toFixed(1) },
+                { key: "observed", label: "Observado (%)", numeric: true, format: (v) => Number(v).toFixed(1) },
+              ]}
+              rows={expectedVsObserved}
+            />
           </div>
 
           <div>
@@ -133,15 +161,15 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
               Acúmulo de quase acertos e resultado líquido (R$)
             </h4>
             <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={cumulative}>
+              <LineChart data={cumulative} aria-hidden="true">
                 <CartesianGrid stroke="oklch(1 0 0 / 0.08)" vertical={false} />
                 <XAxis
                   dataKey="round"
-                  stroke="oklch(0.75 0.02 245)"
+                  stroke="oklch(0.78 0.02 245)"
                   fontSize={11}
                   tickLine={false}
                 />
-                <YAxis stroke="oklch(0.75 0.02 245)" fontSize={11} tickLine={false} />
+                <YAxis stroke="oklch(0.78 0.02 245)" fontSize={11} tickLine={false} />
                 <Tooltip
                   contentStyle={{
                     background: "oklch(0.22 0.04 250)",
@@ -169,6 +197,18 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
                 />
               </LineChart>
             </ResponsiveContainer>
+            <AccessibleChartTable
+              title="Acúmulo de quase acertos e resultado líquido"
+              caption="Tabela equivalente ao gráfico de linhas acima."
+              summary={cumSummary}
+              columns={[
+                { key: "round", label: "Rodada", numeric: true, format: (v) => String(v) },
+                { key: "category", label: "Categoria" },
+                { key: "nearCumulative", label: "Quase (acum.)", numeric: true, format: (v) => String(v) },
+                { key: "netResult", label: "Líquido (R$)", numeric: true, format: (v) => Number(v).toFixed(2) },
+              ]}
+              rows={cumulative}
+            />
           </div>
 
           <dl className="grid grid-cols-3 gap-2 text-center text-xs">
