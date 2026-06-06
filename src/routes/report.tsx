@@ -243,7 +243,27 @@ function ReportPage() {
               <Bar dataKey="perdas" stackId="a" fill="oklch(0.7 0.2 25)" name="Perdas" />
             </BarChart>
           </ResponsiveContainer>
+          <div className="mt-3">
+            <AccessibleChartTable
+              title="Distribuição de resultados por experimento"
+              caption="Tabela equivalente ao gráfico acima."
+              summary={`Resultados por experimento: ${nearMissByExperiment
+                .map(
+                  (d) =>
+                    `${d.label} — acertos ${d.acertos}, quase ${d.quase}, perdas ${d.perdas}.`,
+                )
+                .join(" ")}`}
+              columns={[
+                { key: "label", label: "Experimento" },
+                { key: "acertos", label: "Acertos", numeric: true, format: (v) => String(v) },
+                { key: "quase", label: "Quase", numeric: true, format: (v) => String(v) },
+                { key: "perdas", label: "Perdas", numeric: true, format: (v) => String(v) },
+              ]}
+              rows={nearMissByExperiment}
+            />
+          </div>
         </section>
+
 
         <section className="glass-panel p-5" aria-labelledby="chart-ledger">
           <h3 id="chart-ledger" className="mb-3 text-sm font-semibold">
@@ -286,7 +306,22 @@ function ReportPage() {
               </PieChart>
             </ResponsiveContainer>
           )}
+          <div className="mt-3">
+            <AccessibleChartTable
+              title="Eventos do ledger por tipo"
+              caption="Tabela equivalente ao gráfico de pizza."
+              summary={`Total de tipos: ${ledgerTotals.length}. ${ledgerTotals
+                .map((d) => `${d.type}: ${d.count}`)
+                .join(", ")}.`}
+              columns={[
+                { key: "type", label: "Tipo" },
+                { key: "count", label: "Eventos", numeric: true, format: (v) => String(v) },
+              ]}
+              rows={ledgerTotals}
+            />
+          </div>
         </section>
+
       </div>
 
       <section className="glass-panel mb-8 p-5" aria-labelledby="interp">
