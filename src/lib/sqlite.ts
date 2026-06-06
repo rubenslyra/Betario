@@ -121,7 +121,7 @@ export function scheduleSave() {
 
 export function downloadDb(filename = "bet-ray-lab.sqlite") {
   if (!db) return;
-  const blob = new Blob([db.export()], { type: "application/x-sqlite3" });
+  const blob = new Blob([db.export() as BlobPart], { type: "application/x-sqlite3" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
