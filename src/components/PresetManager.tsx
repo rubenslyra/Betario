@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLab, experimentLabels, type ExperimentKey } from "@/lib/lab-store";
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function PresetManager({ experiment }: { experiment: ExperimentKey }) {
-  const presets = useLab((s) => s.presets.filter((p) => p.experiment === experiment));
+  const presets = useLab((s) => s.presets);
   const active = useLab((s) => s.experiments[experiment].activePresetId);
   const savePreset = useLab((s) => s.savePreset);
   const applyPreset = useLab((s) => s.applyPreset);
   const deletePreset = useLab((s) => s.deletePreset);
+
+  const experimentPresets = useMemo(
+    () => presets.filter((p) => p.experiment === experiment),
+    [experiment, presets],
+  );
 
   const [name, setName] = useState("");
   const [open, setOpen] = useState(false);
@@ -20,10 +25,7 @@ export function PresetManager({ experiment }: { experiment: ExperimentKey }) {
   };
 
   return (
-    <section
-      className="glass-panel space-y-3 p-5"
-      aria-labelledby={`presets-${experiment}`}
-    >
+    <section className="glass-panel space-y-3 p-5" aria-labelledby={`presets-${experiment}`}>
       <header className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Bookmark className="h-4 w-4 text-gold" aria-hidden="true" />
@@ -79,14 +81,16 @@ export function PresetManager({ experiment }: { experiment: ExperimentKey }) {
         )}
       </AnimatePresence>
 
-      {presets.length === 0 ? (
+      {experimentPresets.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">
-          Nenhum preset salvo. Ajuste os parâmetros e clique em <strong>Novo</strong> para guardar uma configuração.
+          Nenhum preset salvo. Ajuste os parâmetros e clique em <strong>Novo</strong> para guardar
+          uma configuração.
         </p>
       ) : (
         <ul className="space-y-1.5" aria-label={`Presets para ${experimentLabels[experiment]}`}>
-          {presets.map((p) => {
+          {experimentPresets.map((p) => {
             const isActive = p.id === active;
+            const title = `P(win) ${(p.params.winChance * 100).toFixed(0)}% · P(quase) ${(p.params.nearMissChance * 100).toFixed(0)}% · Limite ${p.params.roundLimit || "∞"}`;
             return (
               <li key={p.id}>
                 <div
@@ -101,7 +105,7 @@ export function PresetManager({ experiment }: { experiment: ExperimentKey }) {
                     onClick={() => applyPreset(p.id)}
                     aria-pressed={isActive}
                     className="flex-1 truncate text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                    title={`P(win) ${(p.params.winChance * 100).toFixed(0)}% · P(quase) ${(p.params.nearMissChance * 100).toFixed(0)}% · Limite ${p.params.roundLimit || "∞"}`}
+                    title={title}
                   >
                     <span className={isActive ? "text-primary font-semibold" : "text-foreground"}>
                       {p.name}

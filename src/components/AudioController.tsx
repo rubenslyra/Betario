@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { Volume2, VolumeX, Music } from "lucide-react";
 import { TRACKS, trackForPath, type TrackKey } from "@/lib/audio-tracks";
@@ -9,115 +9,110 @@ const DEFAULT_VOLUME = 0.28;
 type Persist = { muted: boolean; volume: number; enabled: boolean };
 
 function loadPersist(): Persist {
-  if (typeof window === "undefined")
+  if (typeof window === "undefined") {
     return { muted: false, volume: DEFAULT_VOLUME, enabled: false };
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE);
-    if (raw) return { muted: false, volume: DEFAULT_VOLUME, enabled: false, ...JSON.parse(raw) };
+    if (raw) {
+      return { muted: false, volume: DEFAULT_VOLUME, enabled: false, ...JSON.parse(raw) };
+    }
   } catch {
     /* noop */
   }
+
   return { muted: false, volume: DEFAULT_VOLUME, enabled: false };
 }
 
 export function AudioController() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fadeRef = useRef<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<Persist>(() => loadPersist());
   const [currentTrack, setCurrentTrack] = useState<TrackKey>("drift");
-  const [phase, setPhase] = useState<"muted" | "playing" | "paused" | "transitioning">(
-    "muted",
-  );
+  const [phase, setPhase] = useState<"muted" | "playing" | "paused">("muted");
   const [open, setOpen] = useState(false);
 
-  useEffect(() => setMounted(true), []);
-
-  // Persist
   useEffect(() => {
-    if (mounted)
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
       localStorage.setItem(
         STORAGE,
         JSON.stringify({ muted: state.muted, volume: state.volume, enabled: state.enabled }),
       );
+    }
   }, [state, mounted]);
 
-  // Resolve target track from route
   const targetTrack = trackForPath(pathname);
 
-  const clearFade = () => {
-    if (fadeRef.current) {
-      window.clearInterval(fadeRef.current);
-      fadeRef.current = null;
-    }
-  };
+  const startTrack = useCallback(
+    (track: TrackKey) => {
+      const audio = audioRef.current;
+      if (!audio) return;
 
-  const fadeTo = (target: number, onDone?: () => void) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    clearFade();
-    const step = 0.04;
-    fadeRef.current = window.setInterval(() => {
-      const cur = audio.volume;
-      if (Math.abs(cur - target) < step) {
-        audio.volume = target;
-        clearFade();
-        onDone?.();
+      audio.dataset.trackKey = track;
+      audio.src = TRACKS[track].url;
+      audio.loop = true;
+      audio.volume = state.volume;
+      audio.load();
+      setCurrentTrack(track);
+
+      const playPromise = audio.play();
+      if (!playPromise) {
+        setPhase("playing");
         return;
       }
-      audio.volume = cur < target ? Math.min(target, cur + step) : Math.max(target, cur - step);
-    }, 40);
-  };
 
-  // Handle track change with crossfade
-  useEffect(() => {
-    if (!state.enabled || state.muted) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (targetTrack === currentTrack && !audio.paused) return;
+      playPromise
+        .then(() => setPhase("playing"))
+        .catch((error) => {
+          console.warn("[AudioController] failed to play track", error);
+          setPhase("paused");
+        });
+    },
+    [state.volume],
+  );
 
-    setPhase("transitioning");
-    fadeTo(0, () => {
-      audio.src = TRACKS[targetTrack].url;
-      audio.loop = true;
-      audio.volume = 0;
-      setCurrentTrack(targetTrack);
-      const playPromise = audio.play();
-      if (playPromise)
-        playPromise
-          .then(() => {
-            fadeTo(state.volume, () => setPhase("playing"));
-          })
-          .catch(() => setPhase("paused"));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetTrack, state.enabled, state.muted]);
-
-  // Volume changes (no transition)
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-    if (state.muted || !state.enabled) {
-      fadeTo(0, () => {
-        audio.pause();
-        setPhase("muted");
-      });
-    } else if (phase === "paused" || audio.paused) {
-      audio.volume = 0;
-      audio.play().then(() => fadeTo(state.volume, () => setPhase("playing"))).catch(() => {});
-    } else {
-      audio.volume = state.volume;
+    if (!audio || !mounted) return;
+    if (!state.enabled || state.muted) {
+      audio.pause();
+      setPhase("muted");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.muted, state.volume, state.enabled]);
+
+    if (audio.dataset.trackKey !== targetTrack || audio.paused) {
+      startTrack(targetTrack);
+      return;
+    }
+
+    audio.volume = state.volume;
+    setPhase("playing");
+  }, [mounted, startTrack, state.enabled, state.muted, state.volume, targetTrack]);
 
   if (!mounted) return null;
 
   const activate = () => {
     setState((s) => ({ ...s, enabled: true, muted: false }));
     setOpen(true);
+    startTrack(targetTrack);
   };
+
+  const handlePrimaryAction = () => {
+    const audio = audioRef.current;
+    if (!state.enabled || state.muted || !audio?.dataset.trackKey || audio.paused) {
+      activate();
+      return;
+    }
+
+    setOpen((value) => !value);
+  };
+
   const toggleMute = () => setState((s) => ({ ...s, muted: !s.muted, enabled: true }));
 
   return (
@@ -172,13 +167,11 @@ export function AudioController() {
         )}
         <button
           type="button"
-          onClick={state.enabled ? () => setOpen((o) => !o) : activate}
+          onClick={handlePrimaryAction}
           aria-label={
-            !state.enabled
+            !state.enabled || state.muted || (audioRef.current?.paused ?? true)
               ? "Ativar áudio do laboratório"
-              : state.muted
-                ? "Reativar áudio"
-                : "Controles de áudio"
+              : "Controles de áudio"
           }
           className={`group inline-flex items-center gap-2 rounded-full border border-border px-3 py-2 text-xs font-semibold shadow-lg backdrop-blur-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
             state.enabled && !state.muted
@@ -194,9 +187,11 @@ export function AudioController() {
           <span className="hidden sm:inline">
             {!state.enabled ? "Ativar áudio" : state.muted ? "Som desligado" : "Som ativo"}
           </span>
-          {phase === "transitioning" && (
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold" aria-hidden="true" />
-          )}
+          {phase === "playing" ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
+          ) : phase === "paused" ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-danger" aria-hidden="true" />
+          ) : null}
         </button>
       </div>
     </>

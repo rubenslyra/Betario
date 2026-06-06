@@ -25,7 +25,11 @@ const palette = {
 
 export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) {
   const exp = useLab((s) => s.experiments[experiment]);
-  const events = useLab((s) => s.events.filter((e) => e.experiment === experiment));
+  const events = useLab((s) => s.events);
+  const experimentEvents = useMemo(
+    () => events.filter((e) => e.experiment === experiment),
+    [events, experiment],
+  );
 
   const expectedVsObserved = useMemo(() => {
     const rounds = Math.max(1, exp.stats.rounds);
@@ -50,7 +54,7 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
   }, [exp]);
 
   const cumulative = useMemo(() => {
-    const results = events
+    const results = experimentEvents
       .filter((e) => e.type === "RESULTADO_SIMULADO")
       .slice()
       .reverse();
@@ -69,7 +73,7 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
         category: cat ?? "—",
       };
     });
-  }, [events]);
+  }, [experimentEvents]);
 
   const empty = exp.stats.rounds === 0;
 
@@ -90,10 +94,7 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
       }. Resultado líquido final fictício: R$ ${(cumulative[cumulative.length - 1]?.netResult ?? 0).toFixed(2)}.`;
 
   return (
-    <section
-      aria-labelledby={`charts-${experiment}`}
-      className="glass-panel space-y-6 p-5"
-    >
+    <section aria-labelledby={`charts-${experiment}`} className="glass-panel space-y-6 p-5">
       <header>
         <h3 id={`charts-${experiment}`} className="text-sm font-semibold">
           Visualização — {experimentLabels[experiment]}
@@ -149,8 +150,18 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
               summary={evoSummary}
               columns={[
                 { key: "label", label: "Categoria" },
-                { key: "expected", label: "Esperado (%)", numeric: true, format: (v) => Number(v).toFixed(1) },
-                { key: "observed", label: "Observado (%)", numeric: true, format: (v) => Number(v).toFixed(1) },
+                {
+                  key: "expected",
+                  label: "Esperado (%)",
+                  numeric: true,
+                  format: (v) => Number(v).toFixed(1),
+                },
+                {
+                  key: "observed",
+                  label: "Observado (%)",
+                  numeric: true,
+                  format: (v) => Number(v).toFixed(1),
+                },
               ]}
               rows={expectedVsObserved}
             />
@@ -204,8 +215,18 @@ export function ExperimentCharts({ experiment }: { experiment: ExperimentKey }) 
               columns={[
                 { key: "round", label: "Rodada", numeric: true, format: (v) => String(v) },
                 { key: "category", label: "Categoria" },
-                { key: "nearCumulative", label: "Quase (acum.)", numeric: true, format: (v) => String(v) },
-                { key: "netResult", label: "Líquido (R$)", numeric: true, format: (v) => Number(v).toFixed(2) },
+                {
+                  key: "nearCumulative",
+                  label: "Quase (acum.)",
+                  numeric: true,
+                  format: (v) => String(v),
+                },
+                {
+                  key: "netResult",
+                  label: "Líquido (R$)",
+                  numeric: true,
+                  format: (v) => Number(v).toFixed(2),
+                },
               ]}
               rows={cumulative}
             />

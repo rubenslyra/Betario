@@ -4,7 +4,11 @@ import { motion } from "framer-motion";
 export function GlassMug({ level, pouring }: { level: number; pouring: boolean }) {
   const clamped = Math.min(110, Math.max(0, level));
   return (
-    <div className="relative h-72 w-48">
+    <motion.div
+      className="relative h-72 w-48"
+      animate={pouring ? { rotate: 10, x: 10 } : { rotate: 0, x: 0 }}
+      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+    >
       {/* steam */}
       {pouring && (
         <>
@@ -79,8 +83,21 @@ export function GlassMug({ level, pouring }: { level: number; pouring: boolean }
           { p: 100, y: 90 },
         ].map((m) => (
           <g key={m.p}>
-            <line x1="30" x2="40" y1={m.y} y2={m.y} stroke="oklch(0.92 0.03 220)" strokeWidth="1.5" />
-            <text x="44" y={m.y + 3} fontSize="10" fill="oklch(0.85 0.04 230)" fontFamily="monospace">
+            <line
+              x1="30"
+              x2="40"
+              y1={m.y}
+              y2={m.y}
+              stroke="oklch(0.92 0.03 220)"
+              strokeWidth="1.5"
+            />
+            <text
+              x="44"
+              y={m.y + 3}
+              fontSize="10"
+              fill="oklch(0.85 0.04 230)"
+              fontFamily="monospace"
+            >
               {m.p}%
             </text>
           </g>
@@ -88,7 +105,7 @@ export function GlassMug({ level, pouring }: { level: number; pouring: boolean }
         {/* shine */}
         <path d="M44 80 q-4 80 4 160" stroke="#fff" strokeWidth="6" opacity="0.18" fill="none" />
       </svg>
-    </div>
+    </motion.div>
   );
 }
 
@@ -96,8 +113,8 @@ export function GlassMug({ level, pouring }: { level: number; pouring: boolean }
 export function CoffeePot({ pouring }: { pouring: boolean }) {
   return (
     <motion.div
-      className="absolute -top-8 left-1/2 -translate-x-[110%] origin-bottom-right"
-      animate={{ rotate: pouring ? -55 : -15, x: pouring ? "-95%" : "-110%" }}
+      className="absolute -top-8 left-1/2 -translate-x-[72%] origin-bottom-right"
+      animate={{ rotate: pouring ? 35 : 15, x: pouring ? "42%" : "0%" }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
     >
       <svg viewBox="0 0 140 140" className="h-32 w-32">
@@ -116,7 +133,12 @@ export function CoffeePot({ pouring }: { pouring: boolean }) {
           strokeWidth="2"
         />
         {/* spout */}
-        <path d="M110 55 q25 -5 28 8 q-4 4 -28 14" fill="url(#pot)" stroke="#1d0b03" strokeWidth="2" />
+        <path
+          d="M110 55 q25 -5 28 8 q-4 4 -28 14"
+          fill="url(#pot)"
+          stroke="#1d0b03"
+          strokeWidth="2"
+        />
         {/* handle */}
         <path d="M40 60 q-22 5 -22 25 q0 18 22 22" fill="none" stroke="#1d0b03" strokeWidth="6" />
         {/* lid */}
@@ -131,10 +153,10 @@ export function CoffeePot({ pouring }: { pouring: boolean }) {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 110 }}
           exit={{ opacity: 0 }}
-          className="absolute right-2 top-20 w-1.5 rounded-full"
+          className="absolute left-4 top-20 w-1.5 rounded-full"
           style={{
             background: "linear-gradient(180deg, #6b3a16, #3a1c08)",
-            transform: "rotate(35deg)",
+            transform: "rotate(-35deg)",
             transformOrigin: "top",
           }}
         />
@@ -144,13 +166,7 @@ export function CoffeePot({ pouring }: { pouring: boolean }) {
 }
 
 /** Glass jar with level marks; objects clip inside */
-export function GlassJar({
-  level,
-  children,
-}: {
-  level: number;
-  children?: React.ReactNode;
-}) {
+export function GlassJar({ level, children }: { level: number; children?: React.ReactNode }) {
   const clamped = Math.min(115, Math.max(0, level));
   return (
     <div className="relative h-72 w-56">
@@ -166,7 +182,15 @@ export function GlassJar({
           </clipPath>
         </defs>
         {/* rim */}
-        <rect x="24" y="36" width="176" height="14" rx="4" fill="oklch(0.85 0.04 220)" opacity="0.55" />
+        <rect
+          x="24"
+          y="36"
+          width="176"
+          height="14"
+          rx="4"
+          fill="oklch(0.85 0.04 220)"
+          opacity="0.55"
+        />
         {/* body */}
         <path
           d="M30 60 q0 -10 10 -10 h144 q10 0 10 10 v200 q0 15 -15 15 h-134 q-15 0 -15 -15z"
@@ -199,7 +223,13 @@ export function GlassJar({
                 stroke="oklch(0.85 0.04 220)"
                 strokeWidth="1.5"
               />
-              <text x="212" y={y + 3} fontSize="9" fill="oklch(0.85 0.04 220)" fontFamily="monospace">
+              <text
+                x="212"
+                y={y + 3}
+                fontSize="9"
+                fill="oklch(0.85 0.04 220)"
+                fontFamily="monospace"
+              >
                 {p}%
               </text>
             </g>

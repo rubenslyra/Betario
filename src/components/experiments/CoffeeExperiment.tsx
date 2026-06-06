@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLab } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
@@ -6,6 +6,8 @@ import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlassMug, CoffeePot } from "@/components/illustrations/Scene";
+
+const COFFEE_SOUND = "/audio/coffee-pouring-into-a-cup.mp3";
 
 const OPTIONS = [
   { label: "25%", value: 25 },
@@ -20,28 +22,76 @@ export function CoffeeExperiment() {
   const [actual, setActual] = useState<number | null>(null);
   const [pouring, setPouring] = useState(false);
   const [cat, setCat] = useState<"loss" | "near-miss" | "win" | null>(null);
+  const pourAudioRef = useRef<HTMLAudioElement | null>(null);
   const registerBet = useLab((s) => s.registerBet);
   const registerResult = useLab((s) => s.registerResult);
   const rollOutcome = useLab((s) => s.rollOutcome);
 
+  useEffect(
+    () => () => {
+      const audio = pourAudioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.onended = null;
+        audio.onerror = null;
+      }
+    },
+    [],
+  );
+
+  const finishPour = (g: number) => {
+    const outcome = rollOutcome("coffee");
+    let a: number;
+    if (outcome === "win") a = g + Math.floor(Math.random() * 6 - 3);
+    else if (outcome === "near-miss")
+      a = g + (Math.random() < 0.5 ? -1 : 1) * (8 + Math.floor(Math.random() * 6));
+    else a = Math.floor(Math.random() * 130);
+    a = Math.max(0, a);
+    setActual(a);
+    setCat(outcome);
+    setPouring(false);
+    registerResult("coffee", outcome, outcome === "win" ? 5 : 0);
+
+    const audio = pourAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+
   const pour = (g: number) => {
+    if (pouring) return;
+
     setGuess(g);
     setPouring(true);
     setActual(null);
     setCat(null);
     registerBet(1, "coffee");
-    setTimeout(() => {
-      const outcome = rollOutcome("coffee");
-      let a: number;
-      if (outcome === "win") a = g + Math.floor(Math.random() * 6 - 3);
-      else if (outcome === "near-miss") a = g + (Math.random() < 0.5 ? -1 : 1) * (8 + Math.floor(Math.random() * 6));
-      else a = Math.floor(Math.random() * 130);
-      a = Math.max(0, a);
-      setActual(a);
-      setCat(outcome);
-      setPouring(false);
-      registerResult("coffee", outcome, outcome === "win" ? 5 : 0);
-    }, 1700);
+
+    const audio = pourAudioRef.current;
+    if (!audio) {
+      finishPour(g);
+      return;
+    }
+
+    audio.onended = () => finishPour(g);
+    audio.onerror = () => {
+      audio.pause();
+      audio.currentTime = 0;
+      finishPour(g);
+    };
+    audio.currentTime = 0;
+    audio.loop = false;
+    const playPromise = audio.play();
+
+    if (playPromise) {
+      playPromise.catch(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        finishPour(g);
+      });
+    }
   };
 
   const messages = {
@@ -50,12 +100,15 @@ export function CoffeeExperiment() {
     win: "Boa leitura! Agora compare com o relatório.",
   };
 
-  const fillTarget = pouring ? 80 : actual ?? 0;
+  const fillTarget = pouring ? 80 : (actual ?? 0);
   const diff = guess !== null && actual !== null ? Math.abs(guess - actual) : null;
 
   return (
     <div className="space-y-6">
-      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="coffee-heading">
+      <section
+        className="glass-panel relative overflow-hidden p-6"
+        aria-labelledby="coffee-heading"
+      >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -65,11 +118,16 @@ export function CoffeeExperiment() {
           }}
         />
         <h2 id="coffee-heading" className="mb-1 text-lg font-semibold">
-          Medida do café <span className="ml-2 rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber">Cafeteria educativa</span>
+          Medida do café{" "}
+          <span className="ml-2 rounded-full bg-amber/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber">
+            Cafeteria educativa
+          </span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
           Aposta fictícia de R$1,00. Preveja quanto a jarra vai derramar.
         </p>
+
+        <audio ref={pourAudioRef} src={COFFEE_SOUND} preload="auto" aria-hidden="true" />
 
         {/* scene */}
         <div
@@ -78,7 +136,10 @@ export function CoffeeExperiment() {
           aria-live="polite"
         >
           {/* table */}
-          <div className="absolute bottom-3 left-3 right-3 h-6 rounded-md bg-gradient-to-b from-[#8b5a2b] to-[#5a3618] opacity-80 shadow-lg" aria-hidden />
+          <div
+            className="absolute bottom-3 left-3 right-3 h-6 rounded-md bg-gradient-to-b from-[#8b5a2b] to-[#5a3618] opacity-80 shadow-lg"
+            aria-hidden
+          />
           <div className="relative">
             <GlassMug level={fillTarget} pouring={pouring} />
             <CoffeePot pouring={pouring} />

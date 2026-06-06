@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLab } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
@@ -11,6 +11,10 @@ import {
   SYMBOL_RENDER,
   type SymbolKey,
 } from "@/components/illustrations/FoodSymbols";
+
+const ROULETTE_SOUND = "/audio/roleta-267662.mp3";
+const ROULETTE_STOP_SOUND = "/audio/roleta-parando.mp3";
+const WINNER_SOUND = "/audio/winner-game-sound.mp3";
 
 type Phase = "idle" | "spinning" | "result";
 
@@ -53,8 +57,10 @@ function Reel({
   const Render = SYMBOL_RENDER[symbol];
   return (
     <motion.div
-      animate={shake ? { x: [0, -6, 6, -4, 4, 0] } : highlight === "win" ? { scale: [1, 1.12, 1] } : {}}
-      transition={{ duration: 0.55 }}
+      animate={
+        shake ? { x: [0, -6, 6, -4, 4, 0] } : highlight === "win" ? { scale: [1, 1.12, 1] } : {}
+      }
+      transition={{ duration: 0.65 }}
       className={`relative flex h-28 w-24 items-center justify-center overflow-hidden rounded-2xl border-2 bg-gradient-to-b from-panel-soft to-panel shadow-inner backdrop-blur ${
         highlight === "win"
           ? "border-success/70 shadow-success/30"
@@ -81,47 +87,176 @@ export function SymbolsExperiment() {
   const [reels, setReels] = useState<SymbolKey[]>(["pera", "maca", "ovo"]);
   const [category, setCategory] = useState<"loss" | "near-miss" | "win" | null>(null);
   const [pulse, setPulse] = useState(0);
+  const rouletteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const rouletteStopAudioRef = useRef<HTMLAudioElement | null>(null);
+  const winnerAudioRef = useRef<HTMLAudioElement | null>(null);
+  const shuffleTimerRef = useRef<number | null>(null);
   const registerBet = useLab((s) => s.registerBet);
   const registerResult = useLab((s) => s.registerResult);
   const rollOutcome = useLab((s) => s.rollOutcome);
 
+  useEffect(
+    () => () => {
+      if (shuffleTimerRef.current) {
+        window.clearInterval(shuffleTimerRef.current);
+        shuffleTimerRef.current = null;
+      }
+      const audio = rouletteAudioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.onended = null;
+        audio.onerror = null;
+      }
+      const stopAudio = rouletteStopAudioRef.current;
+      if (stopAudio) {
+        stopAudio.pause();
+        stopAudio.currentTime = 0;
+        stopAudio.onended = null;
+        stopAudio.onerror = null;
+      }
+      const winnerAudio = winnerAudioRef.current;
+      if (winnerAudio) {
+        winnerAudio.pause();
+        winnerAudio.currentTime = 0;
+        winnerAudio.onended = null;
+        winnerAudio.onerror = null;
+      }
+    },
+    [],
+  );
+
+  const buildFinalReels = (cat: "loss" | "near-miss" | "win") => {
+    if (cat === "win") {
+      const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
+      return [s, s, s] as SymbolKey[];
+    }
+
+    if (cat === "near-miss") {
+      const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
+      const other = SYMBOL_KEYS.filter((x) => x !== s)[
+        Math.floor(Math.random() * (SYMBOL_KEYS.length - 1))
+      ];
+      return [s, s, other] as SymbolKey[];
+    }
+
+    const final = [0, 1, 2].map(
+      () => SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)],
+    ) as SymbolKey[];
+    if (new Set(final).size < 3) {
+      final[2] = SYMBOL_KEYS[(SYMBOL_KEYS.indexOf(final[2]) + 1) % SYMBOL_KEYS.length];
+    }
+    return final;
+  };
+
+  const stopRoulette = (cat: "loss" | "near-miss" | "win") => {
+    if (shuffleTimerRef.current) {
+      window.clearInterval(shuffleTimerRef.current);
+      shuffleTimerRef.current = null;
+    }
+
+    const final = buildFinalReels(cat);
+    setReels(final);
+    setCategory(cat);
+    setPhase("result");
+    setPulse((p) => p + 1);
+    registerResult("symbols", cat, cat === "win" ? 5 : 0);
+
+    const audio = rouletteAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    const stopAudio = rouletteStopAudioRef.current;
+    const winnerAudio = winnerAudioRef.current;
+
+    if (stopAudio) {
+      stopAudio.pause();
+      stopAudio.currentTime = 0;
+      stopAudio.onended = null;
+      stopAudio.onerror = null;
+      stopAudio.play().catch((error) => {
+        console.warn("[SymbolsExperiment] roulette stop sound failed", error);
+      });
+
+      if (cat === "win" && winnerAudio) {
+        winnerAudio.pause();
+        winnerAudio.currentTime = 0;
+        winnerAudio.onended = null;
+        winnerAudio.onerror = null;
+        stopAudio.onended = () => {
+          winnerAudio.play().catch((error) => {
+            console.warn("[SymbolsExperiment] winner sound failed", error);
+          });
+        };
+      }
+    } else if (cat === "win" && winnerAudio) {
+      winnerAudio.pause();
+      winnerAudio.currentTime = 0;
+      winnerAudio.play().catch((error) => {
+        console.warn("[SymbolsExperiment] winner sound failed", error);
+      });
+    }
+  };
+
   const spin = () => {
+    if (phase === "spinning") return;
+
     registerBet(1, "symbols");
     setPhase("spinning");
     setCategory(null);
 
-    const tickers = [0, 1, 2].map((i) =>
-      setInterval(() => {
+    if (shuffleTimerRef.current) {
+      window.clearInterval(shuffleTimerRef.current);
+      shuffleTimerRef.current = null;
+    }
+
+    const audio = rouletteAudioRef.current;
+    const beginShuffle = () => {
+      shuffleTimerRef.current = window.setInterval(() => {
         setReels((prev) => {
           const next = [...prev];
-          next[i] = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
+          const index = Math.floor(Math.random() * next.length);
+          next[index] = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
           return next;
         });
-      }, 80),
-    );
-    [700, 1050, 1400].forEach((t, i) => setTimeout(() => clearInterval(tickers[i]), t));
+      }, 80);
+    };
 
-    setTimeout(() => {
-      tickers.forEach(clearInterval);
-      const cat = rollOutcome("symbols");
-      let final: SymbolKey[];
-      if (cat === "win") {
-        const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
-        final = [s, s, s];
-      } else if (cat === "near-miss") {
-        const s = SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
-        const other = SYMBOL_KEYS.filter((x) => x !== s)[Math.floor(Math.random() * (SYMBOL_KEYS.length - 1))];
-        final = [s, s, other];
-      } else {
-        final = [0, 1, 2].map(() => SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)]) as SymbolKey[];
-        if (new Set(final).size < 3) final[2] = SYMBOL_KEYS[(SYMBOL_KEYS.indexOf(final[2]) + 1) % SYMBOL_KEYS.length];
+    if (!audio) {
+      stopRoulette(rollOutcome("symbols"));
+      return;
+    }
+
+    audio.onended = () => {
+      stopRoulette(rollOutcome("symbols"));
+    };
+    audio.onerror = () => {
+      if (shuffleTimerRef.current) {
+        window.clearInterval(shuffleTimerRef.current);
+        shuffleTimerRef.current = null;
       }
-      setReels(final);
-      setCategory(cat);
-      setPhase("result");
-      setPulse((p) => p + 1);
-      registerResult("symbols", cat, cat === "win" ? 5 : 0);
-    }, 1500);
+      setPhase("idle");
+    };
+
+    audio.currentTime = 0;
+    audio.loop = false;
+    const playPromise = audio.play();
+
+    if (!playPromise) {
+      beginShuffle();
+      return;
+    }
+
+    playPromise.then(beginShuffle).catch((error) => {
+      console.warn("[SymbolsExperiment] roulette sound failed", error);
+      if (shuffleTimerRef.current) {
+        window.clearInterval(shuffleTimerRef.current);
+        shuffleTimerRef.current = null;
+      }
+      setPhase("idle");
+    });
   };
 
   const messages = {
@@ -130,9 +265,14 @@ export function SymbolsExperiment() {
     win: "Boa leitura! Agora compare com o relatório.",
   };
 
+  const spinning = phase === "spinning";
+
   return (
     <div className="space-y-6">
-      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="symbols-heading">
+      <section
+        className="glass-panel relative overflow-hidden p-6"
+        aria-labelledby="symbols-heading"
+      >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -153,25 +293,44 @@ export function SymbolsExperiment() {
           Aposta fictícia de R$1,00 por giro. Resultado demonstrativo — sem dinheiro real.
         </p>
 
-        <div
+        <audio ref={rouletteAudioRef} src={ROULETTE_SOUND} preload="auto" aria-hidden="true" />
+        <audio
+          ref={rouletteStopAudioRef}
+          src={ROULETTE_STOP_SOUND}
+          preload="auto"
+          aria-hidden="true"
+        />
+        <audio ref={winnerAudioRef} src={WINNER_SOUND} preload="auto" aria-hidden="true" />
+
+        <motion.div
           className="relative mx-auto mb-6 flex justify-center gap-3 rounded-2xl border border-border bg-background/50 p-6 shadow-inner"
           role="group"
           aria-label="Rolos de símbolos"
           aria-live="polite"
+          animate={spinning ? { rotate: [0, -2.5, 2.5, 0] } : { rotate: 0 }}
+          transition={
+            spinning ? { duration: 0.55, repeat: Infinity, ease: "linear" } : { duration: 0.25 }
+          }
         >
           {reels.map((s, i) => (
             <Reel
               key={i}
               symbol={s}
-              spinning={phase === "spinning"}
-              highlight={phase === "result" && category === "win" ? "win" : phase === "result" && category === "near-miss" && i === 2 ? "near" : null}
+              spinning={spinning}
+              highlight={
+                phase === "result" && category === "win"
+                  ? "win"
+                  : phase === "result" && category === "near-miss" && i === 2
+                    ? "near"
+                    : null
+              }
               shake={phase === "result" && category === "near-miss" && i === 2}
             />
           ))}
           <AnimatePresence>
             {phase === "result" && category === "win" && <Confetti key={pulse} />}
           </AnimatePresence>
-        </div>
+        </motion.div>
 
         <div className="mb-4 grid grid-cols-6 gap-2" aria-hidden="true">
           {SYMBOL_KEYS.map((k) => {
@@ -182,7 +341,9 @@ export function SymbolsExperiment() {
                 title={SYMBOL_LABEL[k]}
                 className="flex flex-col items-center gap-1 rounded-lg border border-border bg-glass p-1.5"
               >
-                <div className="scale-75"><R /></div>
+                <div className="scale-75">
+                  <R />
+                </div>
                 <span className="text-[9px] text-muted-foreground">{SYMBOL_LABEL[k]}</span>
               </div>
             );
@@ -191,13 +352,13 @@ export function SymbolsExperiment() {
 
         <motion.button
           onClick={spin}
-          disabled={phase === "spinning"}
-          aria-busy={phase === "spinning"}
+          disabled={spinning}
+          aria-busy={spinning}
           whileTap={{ scale: 0.97 }}
-          whileHover={phase !== "spinning" ? { scale: 1.01 } : {}}
+          whileHover={!spinning ? { scale: 1.01 } : {}}
           className="w-full rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-3.5 text-base font-semibold text-background shadow-lg shadow-primary/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
         >
-          {phase === "spinning" ? "Girando…" : "Girar (simulação)"}
+          {spinning ? "Girando…" : "Girar (simulação)"}
         </motion.button>
 
         <AnimatePresence>
