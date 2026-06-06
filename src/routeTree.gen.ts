@@ -9,38 +9,168 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SourcesRouteImport } from './routes/sources'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as LedgerRouteImport } from './routes/ledger'
+import { Route as ExperimentsRouteImport } from './routes/experiments'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExperimentsIndexRouteImport } from './routes/experiments.index'
+import { Route as ExperimentsSymbolsRouteImport } from './routes/experiments.symbols'
+import { Route as ExperimentsCoffeeRouteImport } from './routes/experiments.coffee'
+import { Route as ExperimentsCapacityRouteImport } from './routes/experiments.capacity'
 
+const SourcesRoute = SourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LedgerRoute = LedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperimentsRoute = ExperimentsRouteImport.update({
+  id: '/experiments',
+  path: '/experiments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExperimentsIndexRoute = ExperimentsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExperimentsRoute,
+} as any)
+const ExperimentsSymbolsRoute = ExperimentsSymbolsRouteImport.update({
+  id: '/symbols',
+  path: '/symbols',
+  getParentRoute: () => ExperimentsRoute,
+} as any)
+const ExperimentsCoffeeRoute = ExperimentsCoffeeRouteImport.update({
+  id: '/coffee',
+  path: '/coffee',
+  getParentRoute: () => ExperimentsRoute,
+} as any)
+const ExperimentsCapacityRoute = ExperimentsCapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
+  getParentRoute: () => ExperimentsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/experiments': typeof ExperimentsRouteWithChildren
+  '/ledger': typeof LedgerRoute
+  '/report': typeof ReportRoute
+  '/sources': typeof SourcesRoute
+  '/experiments/capacity': typeof ExperimentsCapacityRoute
+  '/experiments/coffee': typeof ExperimentsCoffeeRoute
+  '/experiments/symbols': typeof ExperimentsSymbolsRoute
+  '/experiments/': typeof ExperimentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ledger': typeof LedgerRoute
+  '/report': typeof ReportRoute
+  '/sources': typeof SourcesRoute
+  '/experiments/capacity': typeof ExperimentsCapacityRoute
+  '/experiments/coffee': typeof ExperimentsCoffeeRoute
+  '/experiments/symbols': typeof ExperimentsSymbolsRoute
+  '/experiments': typeof ExperimentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/experiments': typeof ExperimentsRouteWithChildren
+  '/ledger': typeof LedgerRoute
+  '/report': typeof ReportRoute
+  '/sources': typeof SourcesRoute
+  '/experiments/capacity': typeof ExperimentsCapacityRoute
+  '/experiments/coffee': typeof ExperimentsCoffeeRoute
+  '/experiments/symbols': typeof ExperimentsSymbolsRoute
+  '/experiments/': typeof ExperimentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/experiments'
+    | '/ledger'
+    | '/report'
+    | '/sources'
+    | '/experiments/capacity'
+    | '/experiments/coffee'
+    | '/experiments/symbols'
+    | '/experiments/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/ledger'
+    | '/report'
+    | '/sources'
+    | '/experiments/capacity'
+    | '/experiments/coffee'
+    | '/experiments/symbols'
+    | '/experiments'
+  id:
+    | '__root__'
+    | '/'
+    | '/experiments'
+    | '/ledger'
+    | '/report'
+    | '/sources'
+    | '/experiments/capacity'
+    | '/experiments/coffee'
+    | '/experiments/symbols'
+    | '/experiments/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExperimentsRoute: typeof ExperimentsRouteWithChildren
+  LedgerRoute: typeof LedgerRoute
+  ReportRoute: typeof ReportRoute
+  SourcesRoute: typeof SourcesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sources': {
+      id: '/sources'
+      path: '/sources'
+      fullPath: '/sources'
+      preLoaderRoute: typeof SourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ledger': {
+      id: '/ledger'
+      path: '/ledger'
+      fullPath: '/ledger'
+      preLoaderRoute: typeof LedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experiments': {
+      id: '/experiments'
+      path: '/experiments'
+      fullPath: '/experiments'
+      preLoaderRoute: typeof ExperimentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +178,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/experiments/': {
+      id: '/experiments/'
+      path: '/'
+      fullPath: '/experiments/'
+      preLoaderRoute: typeof ExperimentsIndexRouteImport
+      parentRoute: typeof ExperimentsRoute
+    }
+    '/experiments/symbols': {
+      id: '/experiments/symbols'
+      path: '/symbols'
+      fullPath: '/experiments/symbols'
+      preLoaderRoute: typeof ExperimentsSymbolsRouteImport
+      parentRoute: typeof ExperimentsRoute
+    }
+    '/experiments/coffee': {
+      id: '/experiments/coffee'
+      path: '/coffee'
+      fullPath: '/experiments/coffee'
+      preLoaderRoute: typeof ExperimentsCoffeeRouteImport
+      parentRoute: typeof ExperimentsRoute
+    }
+    '/experiments/capacity': {
+      id: '/experiments/capacity'
+      path: '/capacity'
+      fullPath: '/experiments/capacity'
+      preLoaderRoute: typeof ExperimentsCapacityRouteImport
+      parentRoute: typeof ExperimentsRoute
+    }
   }
 }
 
+interface ExperimentsRouteChildren {
+  ExperimentsCapacityRoute: typeof ExperimentsCapacityRoute
+  ExperimentsCoffeeRoute: typeof ExperimentsCoffeeRoute
+  ExperimentsSymbolsRoute: typeof ExperimentsSymbolsRoute
+  ExperimentsIndexRoute: typeof ExperimentsIndexRoute
+}
+
+const ExperimentsRouteChildren: ExperimentsRouteChildren = {
+  ExperimentsCapacityRoute: ExperimentsCapacityRoute,
+  ExperimentsCoffeeRoute: ExperimentsCoffeeRoute,
+  ExperimentsSymbolsRoute: ExperimentsSymbolsRoute,
+  ExperimentsIndexRoute: ExperimentsIndexRoute,
+}
+
+const ExperimentsRouteWithChildren = ExperimentsRoute._addFileChildren(
+  ExperimentsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExperimentsRoute: ExperimentsRouteWithChildren,
+  LedgerRoute: LedgerRoute,
+  ReportRoute: ReportRoute,
+  SourcesRoute: SourcesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
