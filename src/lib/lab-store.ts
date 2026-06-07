@@ -17,12 +17,11 @@ import {
   clearAll,
   type Preset,
 } from "./sqlite";
+import { calculateEducationalBonus, decideRollOutcome, type Outcome } from "./lab-rules";
 
 export type ExperimentKey = "symbols" | "coffee" | "capacity";
 export type UserRole = "admin-super" | "admin" | "mediator" | "user";
 export type UserProfile = "user" | "promoter" | "admin-super";
-export type Outcome = "loss" | "near-miss" | "win";
-
 export type User = {
   id: string;
   username: string;
@@ -220,11 +219,6 @@ function pushEvent(
     experiment,
   };
   return { events: [created, ...events].slice(0, 400), created };
-}
-
-export function calculateEducationalBonus(deposit: number, fraction: number): number {
-  if (deposit < 50) return fraction;
-  return 0;
 }
 
 const initialExperiments: Record<ExperimentKey, ExperimentState> = {
@@ -460,30 +454,25 @@ export const useLab = create<LabState>((set, get) => ({
 
     const role = user?.role ?? "user";
     const isPromoter = user?.promoter ?? false;
+    const result = decideRollOutcome({
+      params: p,
+      role: role === "admin-super" || role === "admin" ? role : "user",
+      isPromoter,
+      consecutiveLosses: state.consecutiveLosses[experiment] ?? 0,
+      pendingBatchWins: state.pendingBatchWins,
+      random: Math.random(),
+    });
 
-    if (role === "admin-super" || role === "admin") {
-      const r = Math.random();
-      if (r < p.winChance) return "win";
-      if (r < p.winChance + p.nearMissChance) return "near-miss";
-      return "loss";
+    if (result.consecutiveLosses !== undefined) {
+      set({
+        consecutiveLosses: { ...get().consecutiveLosses, [experiment]: result.consecutiveLosses },
+      });
+    }
+    if (result.pendingBatchWins !== undefined) {
+      set({ pendingBatchWins: result.pendingBatchWins });
     }
 
-    if (isPromoter) {
-      const losses = state.consecutiveLosses[experiment] ?? 0;
-      if (losses >= 3) {
-        set({ consecutiveLosses: { ...get().consecutiveLosses, [experiment]: 0 } });
-        return "win";
-      }
-      set({ consecutiveLosses: { ...get().consecutiveLosses, [experiment]: losses + 1 } });
-      return "loss";
-    }
-
-    if (state.pendingBatchWins > 0) {
-      set({ pendingBatchWins: state.pendingBatchWins - 1 });
-      return "win";
-    }
-
-    return Math.random() < 0.005 ? "near-miss" : "loss";
+    return result.outcome;
   },
 
   registerResult: (experiment, category, payout) => {

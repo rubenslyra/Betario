@@ -12,6 +12,9 @@
 
 ---
 
+**Versão pública para testes:**  
+https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/
+
 > **Simulação fictícia de apostas com viés educacional.**  
 > Nenhum dinheiro real é envolvido. O objetivo é demonstrar, na prática,
 > como probabilidade, perto-ganhos e fricções de saque afetam a tomada de decisão.
@@ -29,11 +32,11 @@ parâmetros configuráveis, permitindo observar na prática conceitos como
 
 ### Experimentos
 
-| Experimento | Descrição | Mecânica |
-|---|---|---|
-| 🎰 **Giro dos símbolos** | Role 3 símbolos e tente acertar os três iguais | Sorteio com 3 rolos embaralhados |
-| ☕ **Medida do café** | Preveja o nível que a jarra vai encher | `rollOutcome` define acerto/quase/erro |
-| 📊 **Quantos cabem?** | Estime a capacidade de um pote | Análogo ao café com objetos visuais |
+| Experimento              | Descrição                                      | Mecânica                               |
+| ------------------------ | ---------------------------------------------- | -------------------------------------- |
+| 🎰 **Giro dos símbolos** | Role 3 símbolos e tente acertar os três iguais | Sorteio com 3 rolos embaralhados       |
+| ☕ **Medida do café**    | Preveja o nível que a jarra vai encher         | `rollOutcome` define acerto/quase/erro |
+| 📊 **Quantos cabem?**    | Estime a capacidade de um pote                 | Análogo ao café com objetos visuais    |
 
 ---
 
@@ -43,11 +46,11 @@ parâmetros configuráveis, permitindo observar na prática conceitos como
 
 Cada experimento possui três parâmetros ajustáveis em tempo real via interface:
 
-| Parâmetro | Padrão (symbols) | Padrão (coffee / capacity) | Descrição |
-|---|---|---|---|
-| `winChance` | **4%** | **10%** | Probabilidade de acerto |
-| `nearMissChance` | **28%** | **25%** | Probabilidade de quase-acerto |
-| `roundLimit` | 20 | 15 | Rodadas antes da pausa reflexiva |
+| Parâmetro        | Padrão (symbols) | Padrão (coffee / capacity) | Descrição                        |
+| ---------------- | ---------------- | -------------------------- | -------------------------------- |
+| `winChance`      | **4%**           | **10%**                    | Probabilidade de acerto          |
+| `nearMissChance` | **28%**          | **25%**                    | Probabilidade de quase-acerto    |
+| `roundLimit`     | 20               | 15                         | Rodadas antes da pausa reflexiva |
 
 A probabilidade de **perda** é calculada como:
 
@@ -59,42 +62,50 @@ P(loss) = 1 - winChance - nearMissChance
 
 <div align="center">
 
-| Experimento | 🟢 Vitória | 🟡 Quase | 🔴 Perda |
-|---|---|---|---|
-| **symbols** | 4% | 28% | 68% |
-| **coffee** | 10% | 25% | 65% |
-| **capacity** | 10% | 25% | 65% |
+| Experimento  | 🟢 Vitória | 🟡 Quase | 🔴 Perda |
+| ------------ | ---------- | -------- | -------- |
+| **symbols**  | 4%         | 28%      | 68%      |
+| **coffee**   | 10%        | 25%      | 65%      |
+| **capacity** | 10%        | 25%      | 65%      |
 
 </div>
 
-### Código-fonte do sorteio
+### Código-fonte do sorteio e perfis
 
-A lógica central está em [`src/lib/lab-store.ts`](src/lib/lab-store.ts) (linhas 296–302):
+A lógica de decisão foi isolada em [`src/lib/lab-rules.ts`](src/lib/lab-rules.ts) para ser testável sem React, Zustand ou SQLite.
 
 ```typescript
-rollOutcome: (experiment) => {
-  const p = get().experiments[experiment].params;
-  const r = Math.random();
-  if (r < p.winChance) return "win";
-  if (r < p.winChance + p.nearMissChance) return "near-miss";
-  return "loss";
-},
+decideRollOutcome({
+  params,
+  role,
+  isPromoter,
+  consecutiveLosses,
+  pendingBatchWins,
+  random,
+});
 ```
 
-Trata-se de uma função pura e determinística: `Math.random()` é a única
-fonte de aleatoriedade, e os limiares são definidos exclusivamente pelos
-parâmetros configurados.
+O store em [`src/lib/lab-store.ts`](src/lib/lab-store.ts) coleta o estado atual, chama essa função e persiste os efeitos.
+
+| Perfil efetivo                  | Regra aplicada                                   |
+| ------------------------------- | ------------------------------------------------ |
+| `admin-super` / `admin`         | Usa `winChance` e `nearMissChance` configuráveis |
+| `promoter`                      | Perde até 3 rodadas consecutivas e ganha na 4ª   |
+| Usuário comum com lote pendente | Consome vitórias pendentes do lote               |
+| Usuário comum sem lote          | Perde por padrão, com `0,5%` de quase-acerto     |
+
+Essa diferença é intencional no sandbox, mas precisa permanecer explícita para auditoria. O README antigo descrevia apenas o caminho probabilístico simples; a regra real atual é a matriz acima.
 
 ### Como auditar
 
-| Método | Onde encontrar |
-|---|---|
-| 🎛️ **Sliders de parâmetros** | Painel "Parâmetros" abaixo de cada experimento — altera `winChance` e `nearMissChance` em tempo real |
-| 💾 **Presets** | Painel "Presets" — salva/carrega combinações de parâmetros com exibição de `P(win) / P(quase)` |
-| 📈 **Estatísticas por experimento** | Gráficos e contadores de `wins`, `nearMisses`, `losses`, `totalBet`, `totalPayout` |
-| 📜 **Event ledger** | Toda aposta e resultado gera um evento (`APOSTA_FICTICIA`, `RESULTADO_SIMULADO`) com timestamp, experimento e valores — persistido em SQLite |
-| 🗄️ **SQLite (WASM)** | Todos os dados persistem no navegador via `sql.js`. Snapshots de parâmetros, estatísticas, eventos e fricções são armazenados e recuperáveis |
-| 🔍 **Código aberto** | Repositório completo disponível — qualquer auditor pode inspecionar `rollOutcome`, `registerResult` e a persistência |
+| Método                              | Onde encontrar                                                                                                                               |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎛️ **Sliders de parâmetros**        | Painel "Parâmetros" abaixo de cada experimento — altera `winChance` e `nearMissChance` em tempo real                                         |
+| 💾 **Presets**                      | Painel "Presets" — salva/carrega combinações de parâmetros com exibição de `P(win) / P(quase)`                                               |
+| 📈 **Estatísticas por experimento** | Gráficos e contadores de `wins`, `nearMisses`, `losses`, `totalBet`, `totalPayout`                                                           |
+| 📜 **Event ledger**                 | Toda aposta e resultado gera um evento (`APOSTA_FICTICIA`, `RESULTADO_SIMULADO`) com timestamp, experimento e valores — persistido em SQLite |
+| 🗄️ **SQLite (WASM)**                | Todos os dados persistem no navegador via `sql.js`. Snapshots de parâmetros, estatísticas, eventos e fricções são armazenados e recuperáveis |
+| 🔍 **Código aberto**                | Repositório completo disponível — qualquer auditor pode inspecionar `rollOutcome`, `registerResult` e a persistência                         |
 
 ### 🐛 Modo de depuração (symbols)
 
@@ -107,28 +118,29 @@ fixo de **3 perdas seguidas + 1 vitória garantida**.
 > ao `rollOutcome` padrão.
 
 Ativação via console do navegador:
+
 ```js
-window.__guaranteedWin(true)   // ativa
-window.__guaranteedWin(false)  // desativa
-window.__guaranteedWin()       // consulta estado
+window.__guaranteedWin(true); // ativa
+window.__guaranteedWin(false); // desativa
+window.__guaranteedWin(); // consulta estado
 ```
 
 ---
 
 ## 🧱 Stack
 
-| Camada | Tecnologia |
-|---|---|
-| **Framework** | [TanStack Start](https://tanstack.com/start) (React 19) |
-| **Linguagem** | TypeScript 5.8 |
-| **Roteamento** | TanStack Router (file-based) |
-| **Estado** | Zustand 5 |
-| **Animação** | Framer Motion 12 |
-| **Gráficos** | Recharts |
-| **Estilo** | Tailwind CSS 4 + class-variance-authority |
-| **Persistência** | SQLite (sql.js via WASM) |
-| **Áudio** | HTMLAudio API |
-| **Build** | Vite 7 |
+| Camada           | Tecnologia                                              |
+| ---------------- | ------------------------------------------------------- |
+| **Framework**    | [TanStack Start](https://tanstack.com/start) (React 19) |
+| **Linguagem**    | TypeScript 5.8                                          |
+| **Roteamento**   | TanStack Router (file-based)                            |
+| **Estado**       | Zustand 5                                               |
+| **Animação**     | Framer Motion 12                                        |
+| **Gráficos**     | Recharts                                                |
+| **Estilo**       | Tailwind CSS 4 + class-variance-authority               |
+| **Persistência** | SQLite (sql.js via WASM)                                |
+| **Áudio**        | HTMLAudio API                                           |
+| **Build**        | Vite 7                                                  |
 
 ---
 
@@ -141,11 +153,18 @@ bun install
 # Servidor de desenvolvimento
 bun run dev
 
-# Build de produção
-bun run build
+# Build de produção comum
+npm run build
+
+# Build estático para GitHub Pages em docs/
+npm run build:pages
 
 # Preview do build
-bun run preview
+npm run preview
+
+# Checks locais
+npm run lint
+npm run test
 ```
 
 ---
@@ -163,7 +182,8 @@ src/
 │   ├── CharacterReaction.tsx   # Personagem reativo
 │   └── ...
 ├── lib/
-│   ├── lab-store.ts       # Zustand store (rollOutcome, registerResult, etc.)
+│   ├── lab-rules.ts       # Regras puras testáveis (bônus e decisão de resultado)
+│   ├── lab-store.ts       # Zustand store (estado, rollOutcome, registerResult, etc.)
 │   ├── sqlite.ts          # Persistência SQLite (WASM)
 │   └── audio-tracks.ts    # Roteamento de áudio
 ├── routes/                # Rotas TanStack
@@ -177,6 +197,51 @@ src/
 └── ...
 ```
 
+## 🌐 GitHub Pages
+
+A pasta [`docs/`](docs/) é o artefato estático que o GitHub Pages deve servir. Para este repositório, o caminho público é:
+
+```text
+/bet-ray-lab-cognitive-sandbox/
+```
+
+Use sempre:
+
+```bash
+npm run build:pages
+```
+
+Esse comando:
+
+1. compila o app com `VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/`;
+2. copia `dist/client` para `docs/`;
+3. recria `docs/index.html` e `docs/404.html` apontando para os assets recém-gerados;
+4. mantém `docs/.nojekyll` para o GitHub Pages servir os arquivos estáticos sem processamento Jekyll.
+
+Depois do build, os arquivos modificados em `docs/` precisam ser commitados e enviados para a branch configurada no Pages. Se a Action passar mas `docs/` não for atualizado na branch servida, a URL pública continuará exibindo o conteúdo antigo.
+
+Se `https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/` responder `404`, confira em **Settings → Pages** se a origem está apontando para a branch correta e para `/docs`, ou se o workflow de Pages está realmente fazendo upload do conteúdo de `docs/`.
+
+Para domínio próprio na raiz, use `VITE_BASE_PATH=/ npm run build && npm run pages:sync`.
+
+## ✅ Testes e validação
+
+Há uma suíte mínima com `node:test` em [`tests/`](tests/). Ela cobre:
+
+- cálculo do bônus educacional;
+- decisão probabilística para admin/admin-super;
+- vitória garantida de promoter após três perdas;
+- vitórias pendentes de lote;
+- comportamento de usuário comum sem lote.
+
+Comandos recomendados antes de publicar:
+
+```bash
+npm run lint
+npm run test
+npm run build:pages
+```
+
 ---
 
 ## 🔒 Mecânica Interna da Banca
@@ -186,13 +251,13 @@ src/
 > usuários comuns, a flag `promoter` com vitórias garantidas e o painel
 > administrativo.
 
-| Papel | Atalho / Acesso | Descrição |
-|---|---|---|
-| 🔐 **Admin-super** | `Ctrl + Shift + A` + senha `admin-super` | Acesso total (`ti.rubens.lyra`) |
-| ⚙️ **Admin** | Painel admin → Aba Usuários | Privilégios administrativos |
-| 💬 **Mediator** | Painel admin → Aba Usuários | Suporte e resposta a dúvidas |
-| 👤 **Usuário** | Padrão | Sistema de lote: ~99,5% de perda entre lotes |
-| ⭐ **Promoter** (flag) | Painel admin → Alternar estrela | Vitória garantida a cada 4 apostas |
+| Papel                  | Atalho / Acesso                          | Descrição                                    |
+| ---------------------- | ---------------------------------------- | -------------------------------------------- |
+| 🔐 **Admin-super**     | `Ctrl + Shift + A` + senha `admin-super` | Acesso total (`ti.rubens.lyra`)              |
+| ⚙️ **Admin**           | Painel admin → Aba Usuários              | Privilégios administrativos                  |
+| 💬 **Mediator**        | Painel admin → Aba Usuários              | Suporte e resposta a dúvidas                 |
+| 👤 **Usuário**         | Padrão                                   | Sistema de lote: ~99,5% de perda entre lotes |
+| ⭐ **Promoter** (flag) | Painel admin → Alternar estrela          | Vitória garantida a cada 4 apostas           |
 
 ---
 
@@ -208,6 +273,6 @@ Todo saldo exibido é fictício e serve unicamente para fins pedagógicos.
 
 ---
 
-**BET-RAY Lab** — *Probabilidade não é sorte. Entenda os números.*
+**BET-RAY Lab** — _Probabilidade não é sorte. Entenda os números._
 
 </div>

@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && rm -rf docs/assets docs/index.html && cp -R dist/client/. docs/ && node scripts/create-github-pages-index.mjs",
+    "build": "vite build",
+    "build:pages": "VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/ vite build && npm run pages:sync",
     "build:dev": "vite build --mode development",
+    "pages:sync": "rm -rf docs/assets docs/index.html && cp -R dist/client/. docs/ && node scripts/create-github-pages-index.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test": "tsc -p tsconfig.test.json && node --test .test-out/tests/**/*.test.js",
     "format": "prettier --write ."
   },
   "dependencies": {

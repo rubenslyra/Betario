@@ -12,10 +12,11 @@ import {
   SYMBOL_RENDER,
   type SymbolKey,
 } from "@/components/illustrations/FoodSymbols";
+import { publicUrl } from "@/lib/public-url";
 
-const ROULETTE_SOUND = "/audio/roleta-267662.mp3";
-const ROULETTE_STOP_SOUND = "/audio/roleta-parando.mp3";
-const WINNER_SOUND = "/audio/winner-game-sound.mp3";
+const ROULETTE_SOUND = publicUrl("audio/roleta-267662.mp3");
+const ROULETTE_STOP_SOUND = publicUrl("audio/roleta-parando.mp3");
+const WINNER_SOUND = publicUrl("audio/winner-game-sound.mp3");
 
 type Phase = "idle" | "spinning" | "result";
 

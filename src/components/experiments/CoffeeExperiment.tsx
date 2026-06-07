@@ -7,8 +7,9 @@ import { PresetManager } from "@/components/PresetManager";
 import { PixDepositModal } from "@/components/PixDepositModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlassMug, CoffeePot } from "@/components/illustrations/Scene";
+import { publicUrl } from "@/lib/public-url";
 
-const COFFEE_SOUND = "/audio/coffee-pouring-into-a-cup.mp3";
+const COFFEE_SOUND = publicUrl("audio/coffee-pouring-into-a-cup.mp3");
 
 const OPTIONS = [
   { label: "25%", value: 25 },

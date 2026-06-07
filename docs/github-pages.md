@@ -4,26 +4,32 @@ Este projeto pode ser publicado no GitHub Pages desde que o build use um `base` 
 
 ## Como compilar
 
-Defina `VITE_BASE_PATH` com o caminho público do site e rode o build normal:
+Para este repositório, rode:
 
 ```bash
-VITE_BASE_PATH=/nome-do-repositorio/ npm run build
+npm run build:pages
 ```
 
-Se o repositório estiver na raiz de um domínio próprio, use `/`.
+O script já define `VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/`, compila o app e sincroniza `dist/client` para `docs/`. Ele também recria `index.html` e `404.html`, ambos apontando para os assets atuais.
 
-O comando `npm run build` gera o bundle em `dist/client` e copia o resultado para a raiz de `docs/`, deixando o `index.html` pronto para o GitHub Pages.
+Se o repositório estiver na raiz de um domínio próprio, use:
+
+```bash
+VITE_BASE_PATH=/ npm run build && npm run pages:sync
+```
 
 ## O que esse ajuste cobre
 
 - Corrige os caminhos dos assets gerados pelo Vite.
 - Ajusta o roteamento do TanStack Router para funcionar no subpath do GitHub Pages.
-- Mantém o mesmo build local quando `VITE_BASE_PATH` não está definido.
+- Mantém o build local separado em `npm run build`.
 - Entrega o conteúdo final diretamente na raiz de `docs/`.
 
 ## Publicação
 
-O GitHub Pages só serve arquivos estáticos. Publique o conteúdo compilado diretamente do diretório `docs/`, onde o `index.html` fica na raiz.
+O GitHub Pages só serve arquivos estáticos. Publique o conteúdo compilado diretamente do diretório `docs/`, onde o `index.html` fica na raiz. Depois de rodar `npm run build:pages`, os arquivos alterados em `docs/` precisam ser commitados na branch configurada no Pages.
+
+Se a URL pública responder `404`, a Action pode ter passado sem publicar este diretório. Confira se o Pages está configurado para a branch certa e pasta `/docs`, ou se o workflow de Pages faz upload de `docs/`.
 
 ## Observação
 

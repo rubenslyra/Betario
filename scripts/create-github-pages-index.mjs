@@ -34,3 +34,4 @@ const html = `<!doctype html>
 `;
 
 fs.writeFileSync(path.join(docsDir, "index.html"), html);
+fs.writeFileSync(path.join(docsDir, "404.html"), html);
