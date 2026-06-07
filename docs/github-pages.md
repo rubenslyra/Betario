@@ -29,7 +29,24 @@ VITE_BASE_PATH=/ npm run build && npm run pages:sync
 
 O GitHub Pages só serve arquivos estáticos. Publique o conteúdo compilado diretamente do diretório `docs/`, onde o `index.html` fica na raiz. Depois de rodar `npm run build:pages`, os arquivos alterados em `docs/` precisam ser commitados na branch configurada no Pages.
 
-Se a URL pública responder `404`, a Action pode ter passado sem publicar este diretório. Confira se o Pages está configurado para a branch certa e pasta `/docs`, ou se o workflow de Pages faz upload de `docs/`.
+## Workflow recomendado
+
+O fluxo recomendado agora é o workflow `.github/workflows/pages.yml`.
+
+Ele executa:
+
+```bash
+npm ci
+npm run test
+npm run lint
+npm run build:pages
+```
+
+Depois publica o diretório `docs/` usando `actions/upload-pages-artifact` e `actions/deploy-pages`.
+
+Para esse workflow funcionar, configure **Settings → Pages → Build and deployment → Source** como **GitHub Actions**.
+
+Se a URL pública responder `404`, a Action pode ter passado sem ser a origem ativa do Pages. Confira se o Pages está configurado como **GitHub Actions**; se estiver em “Deploy from a branch”, ele pode ignorar o artefato enviado pelo workflow.
 
 ## Observação
 

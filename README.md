@@ -220,7 +220,15 @@ Esse comando:
 
 Depois do build, os arquivos modificados em `docs/` precisam ser commitados e enviados para a branch configurada no Pages. Se a Action passar mas `docs/` não for atualizado na branch servida, a URL pública continuará exibindo o conteúdo antigo.
 
-Se `https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/` responder `404`, confira em **Settings → Pages** se a origem está apontando para a branch correta e para `/docs`, ou se o workflow de Pages está realmente fazendo upload do conteúdo de `docs/`.
+O repositório também inclui o workflow [pages.yml](.github/workflows/pages.yml), que roda testes, lint, `build:pages` e publica `docs/` com `actions/deploy-pages`.
+
+Para usar esse fluxo:
+
+1. vá em **Settings → Pages**;
+2. em **Build and deployment**, selecione **Source: GitHub Actions**;
+3. faça push para `main` ou rode **Deploy GitHub Pages** manualmente em **Actions**.
+
+Se `https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/` responder `404`, confira primeiro se o workflow `Deploy GitHub Pages` executou e se a configuração do Pages está em **GitHub Actions**. Se a origem estiver em “Deploy from a branch”, o GitHub pode ignorar o artefato enviado pelo workflow.
 
 Para domínio próprio na raiz, use `VITE_BASE_PATH=/ npm run build && npm run pages:sync`.
 
