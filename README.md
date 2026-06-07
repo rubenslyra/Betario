@@ -215,8 +215,9 @@ Esse comando:
 
 1. compila o app com `VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/`;
 2. copia `dist/client` para `docs/`;
-3. recria `docs/index.html` e `docs/404.html` apontando para os assets recém-gerados;
-4. mantém `docs/.nojekyll` para o GitHub Pages servir os arquivos estáticos sem processamento Jekyll.
+3. renderiza HTML SSR estático a partir de `dist/server/server.js`;
+4. recria `docs/index.html` e `docs/404.html` com o estado de hidratação do TanStack Router;
+5. mantém `docs/.nojekyll` para o GitHub Pages servir os arquivos estáticos sem processamento Jekyll.
 
 Depois do build, os arquivos modificados em `docs/` precisam ser commitados e enviados para a branch configurada no Pages. Se a Action passar mas `docs/` não for atualizado na branch servida, a URL pública continuará exibindo o conteúdo antigo.
 

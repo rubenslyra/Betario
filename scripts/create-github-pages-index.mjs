@@ -1,37 +1,28 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 
+const siteUrl = "https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/";
 const docsDir = path.resolve("docs");
-const assetsDir = path.join(docsDir, "assets");
+const serverEntry = path.resolve("dist/server/server.js");
 
-const files = fs.readdirSync(assetsDir);
-const jsFile = files.find((file) => /^index-.*\.js$/.test(file));
-const cssFile = files.find((file) => /^styles-.*\.css$/.test(file));
+async function renderStaticHtml(url) {
+  const server = await import(serverEntry);
+  const response = await server.default.fetch(new Request(url), {}, {});
 
-if (!jsFile) {
-  throw new Error(`No index bundle found in ${assetsDir}`);
+  if (!response.ok) {
+    throw new Error(`SSR render failed for ${url}: ${response.status} ${response.statusText}`);
+  }
+
+  const html = await response.text();
+  if (!html.includes("$_TSR.router")) {
+    throw new Error("SSR render did not include TanStack Router hydration state");
+  }
+
+  return html;
 }
 
-if (!cssFile) {
-  throw new Error(`No stylesheet bundle found in ${assetsDir}`);
-}
+const html = await renderStaticHtml(siteUrl);
 
-const html = `<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b1020" />
-    <link rel="icon" href="./favicon.ico" />
-    <link rel="stylesheet" href="./assets/${cssFile}" />
-    <title>BET-RAY Lab</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./assets/${jsFile}"></script>
-  </body>
-</html>
-`;
-
-fs.writeFileSync(path.join(docsDir, "index.html"), html);
-fs.writeFileSync(path.join(docsDir, "404.html"), html);
+await fs.writeFile(path.join(docsDir, "index.html"), html);
+await fs.writeFile(path.join(docsDir, "404.html"), html);
+await fs.writeFile(path.join(docsDir, ".nojekyll"), "");
