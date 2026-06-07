@@ -75,13 +75,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "BET-RAY Lab — Laboratório educacional" },
+      { title: "Betario — Laboratório educacional" },
       {
         name: "description",
         content:
           "Laboratório educacional sobre probabilidade, UX persuasiva e risco digital. Sem apostas reais.",
       },
-      { property: "og:title", content: "BET-RAY Lab — Laboratório educacional" },
+      { property: "og:title", content: "Betario — Laboratório educacional" },
       {
         property: "og:description",
         content:

@@ -81,13 +81,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       <EducationalBanner />
       <header className="border-b border-border/60 bg-panel/40 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/" className="flex items-center gap-2.5" aria-label="BET-RAY Lab — Início">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="Betario — Início">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30">
               <Beaker className="h-5 w-5 text-background" strokeWidth={2.5} aria-hidden="true" />
             </div>
             <div>
               <div className="font-mono text-sm font-bold leading-tight tracking-tight">
-                BET-<span className="gold-text">RAY</span> Lab
+                Bet<span className="gold-text">ario</span>
               </div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 @assincronamente
@@ -171,7 +171,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
       <footer className="mt-16 border-t border-border/60 bg-panel/30 py-6">
         <div className="mx-auto max-w-7xl px-4 text-center text-xs text-muted-foreground">
-          BET-RAY Lab · Laboratório educacional · Sem dinheiro real · Sem apostas reais ·{" "}
+          Betario · Laboratório educacional · Sem dinheiro real · Sem apostas reais ·{" "}
           <Link to="/sources" className="text-primary hover:underline">
             Fontes e alertas
           </Link>

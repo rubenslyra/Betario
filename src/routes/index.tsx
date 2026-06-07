@@ -9,7 +9,7 @@ import { Pera, Maca, CafeBean, Xicara } from "@/components/illustrations/FoodSym
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "BET-RAY Lab — Laboratório educacional" },
+      { title: "Betario — Laboratório educacional" },
       {
         name: "description",
         content:
@@ -149,13 +149,11 @@ function Home() {
             @assincronamente · v1
           </div>
           <h1 className="font-mono text-5xl font-bold leading-tight tracking-tight sm:text-7xl">
-            BET-<span className="gold-text">RAY</span>
-            <br />
-            <span className="text-3xl font-light text-muted-foreground sm:text-4xl">Lab</span>
+            Bet<span className="gold-text">ario</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Um laboratório educacional para enxergar a matemática, a UX e os riscos por trás das
-            apostas digitais.
+            Um laboratório educacional para enxergar como apostas digitais podem fazer o apostador
+            de bobo quando a interface esconde a matemática.
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground/80">
             Explore três experimentos visuais com saldo fictício, bônus simulado e ledger

@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { useLab } from "@/lib/lab-store";
 
 export const Route = createFileRoute("/ledger")({
-  head: () => ({ meta: [{ title: "Ledger educacional · BET-RAY Lab" }] }),
+  head: () => ({ meta: [{ title: "Ledger educacional · Betario" }] }),
   component: LedgerPage,
 });
 

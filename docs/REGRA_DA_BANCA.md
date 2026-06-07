@@ -7,7 +7,7 @@
 ```
 
 > **Propósito:** Este documento descreve o funcionamento real dos
-> mecanismos de aposta por trás da interface educacional do BET-RAY Lab.
+> mecanismos de aposta por trás da interface educacional do Betario.
 > O apostador comum NÃO tem acesso a estas informações.
 >
 > O sistema foi projetado para demonstrar, na prática, como a assimetria
@@ -353,7 +353,7 @@ Sem acesso administrativo:
 ---
 
 > ⚠️ **Nota final:** Este documento descreve o comportamento real do sistema.
-> Nenhuma aposta envolve dinheiro real. O BET-RAY Lab é uma ferramenta
+> Nenhuma aposta envolve dinheiro real. O Betario é uma ferramenta
 > educacional para demonstrar os mecanismos de probabilidade e viés cognitivo
 > presentes em sistemas de aposta. Todo saldo exibido é fictício.
 >

@@ -22,7 +22,7 @@ import { downloadDb, importDb } from "@/lib/sqlite";
 import { AccessibleChartTable } from "@/components/AccessibleChartTable";
 
 export const Route = createFileRoute("/report")({
-  head: () => ({ meta: [{ title: "Relatório crítico · BET-RAY Lab" }] }),
+  head: () => ({ meta: [{ title: "Relatório crítico · Betario" }] }),
   component: ReportPage,
 });
 

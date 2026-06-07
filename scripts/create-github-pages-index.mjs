@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const siteUrl = "https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/";
+const siteUrl = "https://rubenslyra.github.io/Betario/";
 const docsDir = path.resolve("docs");
 const serverEntry = path.resolve("dist/server/server.js");
 

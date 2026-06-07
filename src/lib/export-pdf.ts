@@ -14,7 +14,7 @@ export function exportReportPdf(snap: LabStateSnapshot) {
   doc.setTextColor(245, 196, 0);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("BET-RAY Lab", margin, 32);
+  doc.text("Betario", margin, 32);
   doc.setTextColor(244, 247, 250);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -181,7 +181,7 @@ export function exportReportPdf(snap: LabStateSnapshot) {
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `BET-RAY Lab · Educacional · Página ${i}/${pageCount}`,
+      `Betario · Educacional · Página ${i}/${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 16,
       { align: "center" },

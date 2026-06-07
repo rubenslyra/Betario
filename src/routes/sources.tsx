@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { Scale, Heart, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/sources")({
-  head: () => ({ meta: [{ title: "Fontes e alertas · BET-RAY Lab" }] }),
+  head: () => ({ meta: [{ title: "Fontes e alertas · Betario" }] }),
   component: SourcesPage,
 });
 
@@ -75,7 +75,7 @@ function SourcesPage() {
       </div>
 
       <div className="glass-panel mt-8 p-5 text-xs leading-relaxed text-muted-foreground">
-        BET-RAY Lab é uma aplicação educacional do projeto{" "}
+        Betario é uma aplicação educacional do projeto{" "}
         <span className="font-semibold text-foreground">@assincronamente</span>. Não é bet, não
         aceita dinheiro real, não simula ganhos reais e não recomenda apostas.
       </div>

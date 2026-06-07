@@ -1,6 +1,6 @@
 <div align="center">
 
-# ☕ BET-RAY Lab
+# ☕ Betario
 
 **Laboratório Educacional de Probabilidade e Vieses Cognitivos**
 
@@ -13,7 +13,7 @@
 ---
 
 **Versão pública para testes:**  
-https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/
+https://rubenslyra.github.io/Betario/
 
 > **Simulação fictícia de apostas com viés educacional.**  
 > Nenhum dinheiro real é envolvido. O objetivo é demonstrar, na prática,
@@ -25,10 +25,14 @@ https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/
 
 ## 📋 Sobre
 
-BET-RAY Lab é uma plataforma educativa que expõe o usuário a três experimentos
+Betario é uma plataforma educativa que expõe o usuário a três experimentos
 interativos de probabilidade. Cada experimento simula apostas fictícias com
 parâmetros configuráveis, permitindo observar na prática conceitos como
 **expectativa matemática**, **viés de quase-acerto** e **fricção de saque**.
+
+O nome é uma brincadeira com a ideia de que jogos de azar e apostas online
+podem fazer o apostador de bobo quando a matemática, o design persuasivo e as
+regras de saldo ficam escondidos atrás da interface.
 
 ### Experimentos
 
@@ -37,6 +41,10 @@ parâmetros configuráveis, permitindo observar na prática conceitos como
 | 🎰 **Giro dos símbolos** | Role 3 símbolos e tente acertar os três iguais | Sorteio com 3 rolos embaralhados           |
 | ☕ **Medida do café**    | Preveja o nível que a jarra vai encher         | `rollOutcome` define acerto/quase/erro     |
 | 📊 **Desafio do Pote**   | Estime quantas bolinhas cabem no pote          | 20 bolinhas = 100%; acima disso transborda |
+
+> **Aviso de desenvolvimento:** o jogo das bolinhas ainda está em
+> desenvolvimento e pode conter inconsistências. A versão pública deve ser
+> tratada como teste educacional, sem dinheiro real ou promessa de resultado.
 
 ---
 
@@ -202,7 +210,7 @@ src/
 A pasta [`docs/`](docs/) é o artefato estático que o GitHub Pages deve servir. Para este repositório, o caminho público é:
 
 ```text
-/bet-ray-lab-cognitive-sandbox/
+/Betario/
 ```
 
 Use sempre:
@@ -213,7 +221,7 @@ npm run build:pages
 
 Esse comando:
 
-1. compila o app com `VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/`;
+1. compila o app com `VITE_BASE_PATH=/Betario/`;
 2. copia `dist/client` para `docs/`;
 3. renderiza HTML SSR estático a partir de `dist/server/server.js`;
 4. recria `docs/index.html` e `docs/404.html` com o estado de hidratação do TanStack Router;
@@ -229,7 +237,7 @@ Para usar esse fluxo:
 2. em **Build and deployment**, selecione **Source: GitHub Actions** ou **Deploy from a branch → gh-pages / root**;
 3. faça push para `main` ou rode **Deploy GitHub Pages** manualmente em **Actions**.
 
-Se `https://rubenslyra.github.io/bet-ray-lab-cognitive-sandbox/` continuar servindo HTML antigo, confira se o workflow `Deploy GitHub Pages` executou após o último commit. O HTML correto precisa conter `$_TSR.router`; se a página ainda tiver `<div id="root"></div>`, o Pages está usando um artefato antigo.
+Se `https://rubenslyra.github.io/Betario/` continuar servindo HTML antigo, confira se o workflow `Deploy GitHub Pages` executou após o último commit. O HTML correto precisa conter `$_TSR.router`; se a página ainda tiver `<div id="root"></div>`, o Pages está usando um artefato antigo.
 
 Para domínio próprio na raiz, use `VITE_BASE_PATH=/ npm run build && npm run pages:sync`.
 
@@ -282,6 +290,6 @@ Todo saldo exibido é fictício e serve unicamente para fins pedagógicos.
 
 ---
 
-**BET-RAY Lab** — _Probabilidade não é sorte. Entenda os números._
+**Betario** — _Probabilidade não é sorte. Entenda os números._
 
 </div>

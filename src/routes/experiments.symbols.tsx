@@ -16,7 +16,7 @@ function Guard({ children }: { children: React.ReactNode }) {
 }
 
 export const Route = createFileRoute("/experiments/symbols")({
-  head: () => ({ meta: [{ title: "Giro dos símbolos · BET-RAY Lab" }] }),
+  head: () => ({ meta: [{ title: "Giro dos símbolos · Betario" }] }),
   component: () => (
     <Guard>
       <AppShell>

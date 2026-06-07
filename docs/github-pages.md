@@ -10,7 +10,7 @@ Para este repositório, rode:
 npm run build:pages
 ```
 
-O script já define `VITE_BASE_PATH=/bet-ray-lab-cognitive-sandbox/`, compila o app e sincroniza `dist/client` para `docs/`. Ele também renderiza HTML SSR estático por `dist/server/server.js` e recria `index.html` e `404.html` com o estado de hidratação exigido pelo TanStack Router.
+O script já define `VITE_BASE_PATH=/Betario/`, compila o app e sincroniza `dist/client` para `docs/`. Ele também renderiza HTML SSR estático por `dist/server/server.js` e recria `index.html` e `404.html` com o estado de hidratação exigido pelo TanStack Router.
 
 Se o repositório estiver na raiz de um domínio próprio, use:
 

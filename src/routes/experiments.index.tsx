@@ -20,7 +20,7 @@ function Guard({ children }: { children: React.ReactNode }) {
 export const Route = createFileRoute("/experiments/")({
   head: () => ({
     meta: [
-      { title: "Experimentos · BET-RAY Lab" },
+      { title: "Experimentos · Betario" },
       {
         name: "description",
         content: "Três experimentos visuais para estudar probabilidade e percepção.",

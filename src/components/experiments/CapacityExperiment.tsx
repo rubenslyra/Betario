@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, Volume2, VolumeX } from "lucide-react";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { ExperimentControls } from "@/components/ExperimentControls";
@@ -638,6 +638,14 @@ export function CapacityExperiment() {
               {sfxEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </button>
           </div>
+        </div>
+
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-foreground/90">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+          <p>
+            O jogo das bolinhas ainda está em desenvolvimento e pode conter inconsistências. Use
+            esta versão pública como teste educacional, sem dinheiro real ou promessa de resultado.
+          </p>
         </div>
 
         {/* Texto explicativo com frase de defesa */}
