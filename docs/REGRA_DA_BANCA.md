@@ -2,7 +2,7 @@
 
 ```ascii
   ╔══════════════════════════════════════════════════════╗
-  ║   DOCUMENTO INTERNO · ACESSO RESTRITO · ADMIN-SUPER ║
+  ║   DOCUMENTO INTERNO · ACESSO RESTRITO · ADMIN-SUPER  ║
   ╚══════════════════════════════════════════════════════╝
 ```
 

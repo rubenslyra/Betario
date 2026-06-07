@@ -156,10 +156,10 @@ window.__guaranteedWin(); // consulta estado
 
 ```bash
 # Instalar dependências
-bun install
+npm ci
 
 # Servidor de desenvolvimento
-bun run dev
+npm run dev
 
 # Build de produção comum
 npm run build
