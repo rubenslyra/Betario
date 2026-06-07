@@ -136,8 +136,8 @@ const cards: {
         <circle cx="40" cy="42" r="2" fill="#e63946" />
       </svg>
     ),
-    title: "Quantos cabem?",
-    desc: "Objetos coloridos caem no pote de vidro — estime o volume final.",
+    title: "Desafio do Pote",
+    desc: "Bolinhas de gude calibradas mostram capacidade, erro e transbordamento.",
   },
 ];
 

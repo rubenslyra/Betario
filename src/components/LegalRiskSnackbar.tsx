@@ -11,7 +11,7 @@ const messages: Record<string, string> = {
   "/experiments/coffee":
     "Resultado simulado: observe a lógica, não a recompensa. Percepção de controle não muda a probabilidade.",
   "/experiments/capacity":
-    "Resultado simulado: a percepção visual pode enganar a estimativa de volume.",
+    "Experimento educativo: cada bolinha vale 5% da capacidade; acima de 20 bolinhas o pote transborda.",
   "/ledger":
     "O ledger registra eventos como livro-razão. Saldo visual pode ser diferente de saldo realmente sacável.",
   "/report": "O objetivo é interpretar padrões, fricções e riscos de design — não recompensas.",

@@ -396,7 +396,9 @@ export const useLab = create<LabState>((set, get) => ({
       newVisual,
       "saldo_visual",
       "pool_simulada",
-      `Aposta fictícia de R$${amount.toFixed(2)}.`,
+      experiment === "capacity"
+        ? `Ficha de tentativa educativa: ${amount.toFixed(0)}.`
+        : `Aposta fictícia de R$${amount.toFixed(2)}.`,
       experiment,
     );
     const balances = { ...b, visual: newVisual, withdrawable: newWithdrawable };
@@ -840,7 +842,7 @@ export const useLab = create<LabState>((set, get) => ({
 export const experimentLabels: Record<ExperimentKey, string> = {
   symbols: "Giro dos símbolos",
   coffee: "Medida do café",
-  capacity: "Quantos cabem?",
+  capacity: "Desafio do Pote",
 };
 
 if (typeof window !== "undefined") {

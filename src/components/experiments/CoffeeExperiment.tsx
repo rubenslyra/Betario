@@ -6,7 +6,7 @@ import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
 import { PixDepositModal } from "@/components/PixDepositModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlassMug, CoffeePot } from "@/components/illustrations/Scene";
+import { CoffeePourScene } from "@/components/illustrations/Scene";
 import { publicUrl } from "@/lib/public-url";
 
 const COFFEE_SOUND = publicUrl("audio/coffee-pouring-into-a-cup.mp3");
@@ -149,10 +149,7 @@ export function CoffeeExperiment() {
             className="absolute bottom-3 left-3 right-3 h-6 rounded-md bg-gradient-to-b from-[#8b5a2b] to-[#5a3618] opacity-80 shadow-lg"
             aria-hidden
           />
-          <div className="relative">
-            <GlassMug level={fillTarget} pouring={pouring} />
-            <CoffeePot pouring={pouring} />
-          </div>
+          <CoffeePourScene level={fillTarget} pouring={pouring} />
           {/* lab notes */}
           <div className="absolute right-3 top-3 hidden rounded-md border border-border bg-glass px-2 py-1 font-mono text-[10px] text-muted-foreground sm:block">
             obs: marcações 25/50/75/100%

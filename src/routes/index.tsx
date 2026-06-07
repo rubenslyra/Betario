@@ -55,8 +55,8 @@ const games = [
   },
   {
     slug: "capacity" as const,
-    title: "Quantos cabem?",
-    desc: "Objetos coloridos caem no pote de vidro — estime o volume final.",
+    title: "Desafio do Pote",
+    desc: "Bolinhas de gude calibradas mostram capacidade, erro e transbordamento.",
     accent: "from-success/20 to-success/5 border-success/20",
     ghost: "from-success/40 to-success/10",
     art: (

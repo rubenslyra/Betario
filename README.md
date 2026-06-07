@@ -32,11 +32,11 @@ parâmetros configuráveis, permitindo observar na prática conceitos como
 
 ### Experimentos
 
-| Experimento              | Descrição                                      | Mecânica                               |
-| ------------------------ | ---------------------------------------------- | -------------------------------------- |
-| 🎰 **Giro dos símbolos** | Role 3 símbolos e tente acertar os três iguais | Sorteio com 3 rolos embaralhados       |
-| ☕ **Medida do café**    | Preveja o nível que a jarra vai encher         | `rollOutcome` define acerto/quase/erro |
-| 📊 **Quantos cabem?**    | Estime a capacidade de um pote                 | Análogo ao café com objetos visuais    |
+| Experimento              | Descrição                                      | Mecânica                                   |
+| ------------------------ | ---------------------------------------------- | ------------------------------------------ |
+| 🎰 **Giro dos símbolos** | Role 3 símbolos e tente acertar os três iguais | Sorteio com 3 rolos embaralhados           |
+| ☕ **Medida do café**    | Preveja o nível que a jarra vai encher         | `rollOutcome` define acerto/quase/erro     |
+| 📊 **Desafio do Pote**   | Estime quantas bolinhas cabem no pote          | 20 bolinhas = 100%; acima disso transborda |
 
 ---
 
