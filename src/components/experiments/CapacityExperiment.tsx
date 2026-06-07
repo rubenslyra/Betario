@@ -113,8 +113,10 @@ const overflowBallPositions = Array.from(
   }),
 );
 
+const ACTUAL_BALL_OPTIONS = [5, 10, 15, 20];
+
 function generateActualBalls() {
-  return Math.floor(Math.random() * (MAX_VISIBLE_BALLS + 1));
+  return ACTUAL_BALL_OPTIONS[Math.floor(Math.random() * ACTUAL_BALL_OPTIONS.length)];
 }
 
 function classifyCapacityResult(predictedBalls: number, actualBalls: number): CapacityResult {
