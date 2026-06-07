@@ -675,11 +675,16 @@ export const useLab = create<LabState>((set, get) => ({
   },
 
   setProfile: (profile) => {
-    set({
+    const patch: Partial<LabState> = {
       profile,
       consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
       pendingBatchWins: 0,
-    });
+    };
+    const user = get().currentUser;
+    if (user) {
+      patch.currentUser = { ...user, promoter: profile === "promoter" };
+    }
+    set(patch);
   },
 
   unlockAdmin: () => set({ adminUnlocked: true }),
