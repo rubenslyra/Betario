@@ -42,11 +42,14 @@ npm run lint
 npm run build:pages
 ```
 
-Depois publica o diretório `docs/` usando `actions/upload-pages-artifact` e `actions/deploy-pages`.
+Depois publica o diretório `docs/` de duas formas:
 
-Para esse workflow funcionar, configure **Settings → Pages → Build and deployment → Source** como **GitHub Actions**.
+- `actions/upload-pages-artifact` + `actions/deploy-pages`;
+- branch `gh-pages`, forçada com o mesmo conteúdo de `docs/`.
 
-Se a URL pública responder `404`, a Action pode ter passado sem ser a origem ativa do Pages. Confira se o Pages está configurado como **GitHub Actions**; se estiver em “Deploy from a branch”, ele pode ignorar o artefato enviado pelo workflow.
+Para esse workflow funcionar, configure **Settings → Pages → Build and deployment → Source** como **GitHub Actions** ou como **Deploy from a branch → gh-pages / root**.
+
+Se a URL pública continuar servindo HTML antigo, confira se o workflow rodou após o último commit. O HTML correto contém `$_TSR.router`; o HTML antigo contém apenas `<div id="root"></div>`.
 
 ## Observação
 
