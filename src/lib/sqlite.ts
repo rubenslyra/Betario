@@ -11,7 +11,18 @@ import type {
   ExperimentStats,
   FrictionEntry,
   LedgerEvent,
+  UserRole,
 } from "./lab-store";
+
+export type UserRow = {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  promoter: number;  // 0 or 1
+  created_at: string;
+};
 
 export type Preset = {
   id: string;
@@ -89,7 +100,44 @@ function createSchema(d: Database) {
     CREATE TABLE IF NOT EXISTS frictions (
       id TEXT PRIMARY KEY, timestamp TEXT, message TEXT
     );
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL DEFAULT '',
+      password TEXT NOT NULL DEFAULT '123456',
+      role TEXT NOT NULL CHECK (role IN ('admin-super','admin','mediator','user')),
+      promoter INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
   `);
+  seedUsers(d);
+}
+
+function seedUsers(d: Database) {
+  const existing = d.exec("SELECT COUNT(*) FROM users");
+  if (existing[0]?.values[0]?.[0] !== 0) return;
+
+  const now = new Date().toISOString();
+  const stmt = d.prepare(
+    "INSERT INTO users (id, username, email, password, role, promoter, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  );
+  const seeds: [string, string, string, string, UserRole, number, string][] = [
+    ["user_adm_001",   "ti.rubens.lyra",     "ti@betraylab.io",       "boss2024",   "admin-super", 0, now],
+    ["user_adm_002",   "admin.alice",        "alice@betraylab.io",     "admin123",   "admin",       0, now],
+    ["user_adm_003",   "admin.bob",          "bob@betraylab.io",       "admin123",   "admin",       0, now],
+    ["user_med_001",   "mediator.carla",     "carla@betraylab.io",     "suporte",    "mediator",    0, now],
+    ["user_med_002",   "mediator.david",     "david@betraylab.io",     "suporte",    "mediator",    0, now],
+    ["user_001",       "joao.silva",         "joao@email.com",         "123456",     "user",        0, now],
+    ["user_002",       "maria.santos",       "maria@email.com",        "123456",     "user",        0, now],
+    ["user_003",       "pedro.oliveira",     "pedro@email.com",        "123456",     "user",        0, now],
+    ["user_004",       "ana.lima",           "ana@email.com",          "123456",     "user",        0, now],
+    ["user_005",       "lucas.fernandes",    "lucas@email.com",        "123456",     "user",        1, now],
+  ];
+  for (const row of seeds) {
+    stmt.run(row);
+  }
+  stmt.free();
+  scheduleSave();
 }
 
 export async function initDb(): Promise<Database> {
@@ -291,6 +339,64 @@ export function persistPreset(p: Preset) {
     `INSERT OR REPLACE INTO presets (id, experiment, name, params_json, created_at) VALUES (?, ?, ?, ?, ?)`,
     [p.id, p.experiment, p.name, JSON.stringify(p.params), p.createdAt],
   );
+  scheduleSave();
+}
+
+export function loadUsers(): UserRow[] {
+  if (!db) return [];
+  const res = db.exec("SELECT id, username, email, password, role, promoter, created_at FROM users ORDER BY created_at ASC");
+  if (!res[0]) return [];
+  return res[0].values.map((r) => {
+    const [id, username, email, password, role, promoter, createdAt] = r as [string, string, string, string, string, number, string];
+    return { id, username, email, password, role: role as UserRole, promoter, created_at: createdAt };
+  });
+}
+
+export function getUserByLogin(login: string): UserRow | null {
+  if (!db) return null;
+  const res = db.exec(
+    "SELECT id, username, email, password, role, promoter, created_at FROM users WHERE username = ? OR email = ? LIMIT 1",
+    [login, login],
+  );
+  if (!res[0]?.values.length) return null;
+  const [id, username, email, password, role, promoter, createdAt] = res[0].values[0] as [string, string, string, string, string, number, string];
+  return { id, username, email, password, role: role as UserRole, promoter, created_at: createdAt };
+}
+
+export function createUser(id: string, username: string, email: string, password: string, role: UserRole, promoter: number): boolean {
+  if (!db) return false;
+  try {
+    db.run(
+      "INSERT INTO users (id, username, email, password, role, promoter, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id, username, email, password, role, promoter, new Date().toISOString()],
+    );
+    scheduleSave();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function updateUserPassword(id: string, newPassword: string): boolean {
+  if (!db) return false;
+  try {
+    db.run("UPDATE users SET password = ? WHERE id = ?", [newPassword, id]);
+    scheduleSave();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function persistUserRole(id: string, role: UserRole) {
+  if (!db) return;
+  db.run("UPDATE users SET role = ? WHERE id = ?", [role, id]);
+  scheduleSave();
+}
+
+export function persistUserPromoter(id: string, promoter: boolean) {
+  if (!db) return;
+  db.run("UPDATE users SET promoter = ? WHERE id = ?", [promoter ? 1 : 0, id]);
   scheduleSave();
 }
 

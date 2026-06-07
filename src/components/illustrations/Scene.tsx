@@ -114,7 +114,7 @@ export function CoffeePot({ pouring }: { pouring: boolean }) {
   return (
     <motion.div
       className="absolute -top-8 left-1/2 -translate-x-[72%] origin-bottom-right"
-      animate={{ rotate: pouring ? 35 : 15, x: pouring ? "42%" : "0%" }}
+      animate={{ rotate: pouring ? 35 : -15, x: pouring ? "42%" : "0%" }}
       transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
     >
       <svg viewBox="0 0 140 140" className="h-32 w-32">

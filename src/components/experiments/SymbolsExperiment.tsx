@@ -4,6 +4,7 @@ import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
+import { PixDepositModal } from "@/components/PixDepositModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   SYMBOL_KEYS,
@@ -87,6 +88,7 @@ export function SymbolsExperiment() {
   const [reels, setReels] = useState<SymbolKey[]>(["pera", "maca", "ovo"]);
   const [category, setCategory] = useState<"loss" | "near-miss" | "win" | null>(null);
   const [pulse, setPulse] = useState(0);
+  const [showDeposit, setShowDeposit] = useState(false);
   const rouletteAudioRef = useRef<HTMLAudioElement | null>(null);
   const rouletteStopAudioRef = useRef<HTMLAudioElement | null>(null);
   const winnerAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -94,6 +96,8 @@ export function SymbolsExperiment() {
   const registerBet = useLab((s) => s.registerBet);
   const registerResult = useLab((s) => s.registerResult);
   const rollOutcome = useLab((s) => s.rollOutcome);
+  const getPayout = useLab((s) => s.getPayout);
+  const balanceVisual = useLab((s) => s.balances.visual);
 
   useEffect(
     () => () => {
@@ -125,6 +129,10 @@ export function SymbolsExperiment() {
     },
     [],
   );
+
+  const getOutcome = (): "loss" | "near-miss" | "win" => {
+    return rollOutcome("symbols");
+  };
 
   const buildFinalReels = (cat: "loss" | "near-miss" | "win") => {
     if (cat === "win") {
@@ -160,7 +168,7 @@ export function SymbolsExperiment() {
     setCategory(cat);
     setPhase("result");
     setPulse((p) => p + 1);
-    registerResult("symbols", cat, cat === "win" ? 5 : 0);
+    registerResult("symbols", cat, getPayout("symbols", cat));
 
     const audio = rouletteAudioRef.current;
     if (audio) {
@@ -202,6 +210,7 @@ export function SymbolsExperiment() {
 
   const spin = () => {
     if (phase === "spinning") return;
+    if (balanceVisual < 1) { setShowDeposit(true); return; }
 
     registerBet(1, "symbols");
     setPhase("spinning");
@@ -225,12 +234,12 @@ export function SymbolsExperiment() {
     };
 
     if (!audio) {
-      stopRoulette(rollOutcome("symbols"));
+      stopRoulette(getOutcome());
       return;
     }
 
     audio.onended = () => {
-      stopRoulette(rollOutcome("symbols"));
+      stopRoulette(getOutcome());
     };
     audio.onerror = () => {
       if (shuffleTimerRef.current) {
@@ -350,12 +359,27 @@ export function SymbolsExperiment() {
           })}
         </div>
 
+        {balanceVisual < 1 && !spinning && (
+          <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
+            Saldo insuficiente para jogar (R$1,00 por rodada).
+            <button
+              type="button"
+              onClick={() => setShowDeposit(true)}
+              className="ml-2 font-semibold text-primary underline"
+            >
+              Depositar agora
+            </button>
+          </div>
+        )}
+
+        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+
         <motion.button
           onClick={spin}
-          disabled={spinning}
+          disabled={spinning || balanceVisual < 1}
           aria-busy={spinning}
           whileTap={{ scale: 0.97 }}
-          whileHover={!spinning ? { scale: 1.01 } : {}}
+          whileHover={!spinning && balanceVisual >= 1 ? { scale: 1.01 } : {}}
           className="w-full rounded-2xl bg-gradient-to-r from-primary to-accent px-4 py-3.5 text-base font-semibold text-background shadow-lg shadow-primary/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
         >
           {spinning ? "Girando…" : "Girar (simulação)"}

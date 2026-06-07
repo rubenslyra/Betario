@@ -3,16 +3,34 @@ import {
   deletePresetRow,
   initDb,
   loadSnapshot,
+  loadUsers,
+  getUserByLogin,
+  createUser,
+  updateUserPassword,
   persistBalances,
   persistEvent,
   persistExperiment,
   persistFriction,
   persistPreset,
+  persistUserRole,
+  persistUserPromoter,
   clearAll,
   type Preset,
 } from "./sqlite";
 
 export type ExperimentKey = "symbols" | "coffee" | "capacity";
+export type UserRole = "admin-super" | "admin" | "mediator" | "user";
+export type UserProfile = "user" | "promoter" | "admin-super";
+export type Outcome = "loss" | "near-miss" | "win";
+
+export type User = {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  promoter: boolean;
+  createdAt: string;
+};
 
 export type LedgerEventType =
   | "DEPOSITO_FICTICIO"
@@ -104,11 +122,25 @@ type LabState = {
   frictions: FrictionEntry[];
   presets: Preset[];
 
+  profile: UserProfile;
+  adminUnlocked: boolean;
+  currentUser: User | null;
+  users: User[];
+  houseFunds: number;
+  totalHouseRevenue: number;
+  totalBetsCount: number;
+  batchBetsCounter: number;
+  batchRevenueCounter: number;
+  pendingBatchWins: number;
+  nextWinPayout: number;
+  consecutiveLosses: Record<ExperimentKey, number>;
+
   hydrate: () => Promise<void>;
   deposit: (amount: number) => void;
+  pixDeposit: (amount: number) => void;
   registerBet: (amount: number, experiment: ExperimentKey) => void;
-  registerResult: (experiment: ExperimentKey, category: "loss" | "near-miss" | "win", payout: number) => void;
-  rollOutcome: (experiment: ExperimentKey) => "loss" | "near-miss" | "win";
+  registerResult: (experiment: ExperimentKey, category: Outcome, payout: number) => void;
+  rollOutcome: (experiment: ExperimentKey) => Outcome;
   attemptWithdraw: () => string[];
   setParams: (experiment: ExperimentKey, params: Partial<ExperimentParams>) => void;
   resetExperiment: (experiment: ExperimentKey) => void;
@@ -118,6 +150,20 @@ type LabState = {
   savePreset: (experiment: ExperimentKey, name: string) => Preset;
   applyPreset: (id: string) => void;
   deletePreset: (id: string) => void;
+
+  setProfile: (profile: UserProfile) => void;
+  unlockAdmin: () => void;
+  lockAdmin: () => void;
+  triggerBatch: () => void;
+  getPayout: (experiment: ExperimentKey, outcome: Outcome) => number;
+  setCurrentUser: (id: string) => void;
+  setUserRole: (id: string, role: UserRole) => void;
+  setUserPromoter: (id: string, promoter: boolean) => void;
+  syncUsers: () => void;
+  login: (login: string, password: string) => boolean;
+  register: (username: string, email: string, password: string) => string | null;
+  logout: () => void;
+  resetPassword: (login: string) => string | null;
 };
 
 const initialBalances: Balances = {
@@ -176,6 +222,42 @@ export const useLab = create<LabState>((set, get) => ({
   frictions: [],
   presets: [],
 
+  profile: "user",
+  adminUnlocked: false,
+  currentUser: null,
+  users: [],
+  houseFunds: 0,
+  totalHouseRevenue: 0,
+  totalBetsCount: 0,
+  batchBetsCounter: 0,
+  batchRevenueCounter: 0,
+  pendingBatchWins: 0,
+  nextWinPayout: 0,
+  consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+
+  pixDeposit: (amount: number) => {
+    const b = get().balances;
+    const before = b.visual;
+    const newDeposited = b.deposited + amount;
+    const newWithdrawable = b.withdrawable + amount;
+    const newVisual = newDeposited + b.bonus;
+
+    const r = pushEvent(
+      get().events, "DEPOSITO_FICTICIO", amount, before, newVisual,
+      "pix_simulado", "saldo_visual",
+      `Depósito via PIX simulado de R$${amount.toFixed(2)}.`,
+    );
+    persistEvent(r.created);
+    const balances: Balances = {
+      ...b,
+      deposited: newDeposited,
+      withdrawable: newWithdrawable,
+      visual: newVisual,
+    };
+    persistBalances(balances);
+    set({ balances, events: r.events });
+  },
+
   hydrate: async () => {
     try {
       await initDb();
@@ -198,6 +280,16 @@ export const useLab = create<LabState>((set, get) => ({
       aggregate.frictionEvents = snap.frictions.length;
       aggregate.withdrawAttempts = snap.events.filter((e) => e.type === "TENTATIVA_SAQUE").length;
 
+      const userRows = loadUsers();
+      const users: User[] = userRows.map((r) => ({
+        id: r.id,
+        username: r.username,
+        email: r.email,
+        role: r.role,
+        promoter: r.promoter === 1,
+        createdAt: r.created_at,
+      }));
+
       set({
         ready: true,
         balances: snap.balances ?? initialBalances,
@@ -206,6 +298,7 @@ export const useLab = create<LabState>((set, get) => ({
         experiments,
         presets: snap.presets,
         stats: aggregate,
+        users,
       });
 
       // Seed initial deposit event for first-time visitors
@@ -284,21 +377,79 @@ export const useLab = create<LabState>((set, get) => ({
     const newExp: ExperimentState = {
       ...exp, stats: { ...exp.stats, totalBet: exp.stats.totalBet + amount },
     };
+
+    const s = get();
+    const newHF = s.houseFunds + amount;
+    const newRevenue = s.totalHouseRevenue + amount;
+    const newCount = s.totalBetsCount + 1;
+
+    let patch: Partial<LabState> = {
+      houseFunds: newHF,
+      totalHouseRevenue: newRevenue,
+      totalBetsCount: newCount,
+    };
+
+    if (s.profile === "user") {
+      const newBets = s.batchBetsCounter + 1;
+      const newRev = s.batchRevenueCounter + amount;
+
+      if (newBets >= 10001 || newRev >= 1999999) {
+        const prizePool = Math.floor(newRevenue * 0.007);
+        const numWinners = 1 + Math.floor(Math.random() * 3);
+        const perWin = numWinners > 0 ? Math.max(1, Math.floor(prizePool / numWinners)) : 0;
+        patch = {
+          ...patch,
+          batchBetsCounter: 0,
+          batchRevenueCounter: 0,
+          pendingBatchWins: numWinners,
+          nextWinPayout: perWin,
+        };
+      } else {
+        patch = { ...patch, batchBetsCounter: newBets, batchRevenueCounter: newRev };
+      }
+    }
+
     persistBalances(balances);
     persistEvent(r.created);
     persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({
+      ...patch,
       balances, events: r.events,
       experiments: { ...get().experiments, [experiment]: newExp },
     });
   },
 
   rollOutcome: (experiment) => {
-    const p = get().experiments[experiment].params;
-    const r = Math.random();
-    if (r < p.winChance) return "win";
-    if (r < p.winChance + p.nearMissChance) return "near-miss";
-    return "loss";
+    const state = get();
+    const p = state.experiments[experiment].params;
+    const user = state.currentUser;
+
+    const role = user?.role ?? "user";
+    const isPromoter = user?.promoter ?? false;
+
+    if (role === "admin-super" || role === "admin") {
+      const r = Math.random();
+      if (r < p.winChance) return "win";
+      if (r < p.winChance + p.nearMissChance) return "near-miss";
+      return "loss";
+    }
+
+    if (isPromoter) {
+      const losses = state.consecutiveLosses[experiment] ?? 0;
+      if (losses >= 3) {
+        set({ consecutiveLosses: { ...get().consecutiveLosses, [experiment]: 0 } });
+        return "win";
+      }
+      set({ consecutiveLosses: { ...get().consecutiveLosses, [experiment]: losses + 1 } });
+      return "loss";
+    }
+
+    if (state.pendingBatchWins > 0) {
+      set({ pendingBatchWins: state.pendingBatchWins - 1 });
+      return "win";
+    }
+
+    return Math.random() < 0.005 ? "near-miss" : "loss";
   },
 
   registerResult: (experiment, category, payout) => {
@@ -349,6 +500,7 @@ export const useLab = create<LabState>((set, get) => ({
     set({
       balances, events: r.events, stats: newStats,
       experiments: { ...get().experiments, [experiment]: newExp },
+      houseFunds: get().houseFunds - payout,
       showReflectiveModal: reachedLimit || newStats.rounds % 10 === 0,
     });
   },
@@ -459,6 +611,183 @@ export const useLab = create<LabState>((set, get) => ({
       }
     });
     set({ presets, experiments: exps });
+  },
+
+  setProfile: (profile) => {
+    set({
+      profile,
+      consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+      pendingBatchWins: 0,
+    });
+    if (typeof window !== "undefined") {
+      (window as any).__guaranteedWin = profile === "promoter";
+    }
+  },
+
+  unlockAdmin: () => set({ adminUnlocked: true }),
+  lockAdmin: () => {
+    const def = get().users.find((u) => u.id === "user_001") ?? get().users[0] ?? null;
+    const profile: UserProfile = def
+      ? def.role === "admin-super" ? "admin-super" : def.promoter ? "promoter" : "user"
+      : "user";
+    set({ adminUnlocked: false, currentUser: def, profile, consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 }, pendingBatchWins: 0 });
+  },
+
+  setCurrentUser: (id) => {
+    const user = get().users.find((u) => u.id === id);
+    if (!user) return;
+    const profile: UserProfile = user.role === "admin-super"
+      ? "admin-super"
+      : user.promoter
+        ? "promoter"
+        : "user";
+    set({
+      currentUser: user,
+      profile,
+      consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+      pendingBatchWins: 0,
+    });
+    if (typeof window !== "undefined") {
+      (window as any).__guaranteedWin = user.promoter;
+    }
+  },
+
+  setUserRole: (id, role) => {
+    const user = get().users.find((u) => u.id === id);
+    if (!user) return;
+    const updated = { ...user, role };
+    persistUserRole(id, role);
+    const users = get().users.map((u) => (u.id === id ? updated : u));
+    const patch: Partial<LabState> = { users };
+    if (get().currentUser?.id === id) {
+      const profile: UserProfile = role === "admin-super"
+        ? "admin-super"
+        : updated.promoter
+          ? "promoter"
+          : "user";
+      patch.currentUser = updated;
+      patch.profile = profile;
+      patch.consecutiveLosses = { symbols: 0, coffee: 0, capacity: 0 };
+      patch.pendingBatchWins = 0;
+    }
+    set(patch);
+  },
+
+  setUserPromoter: (id, promoter) => {
+    const user = get().users.find((u) => u.id === id);
+    if (!user) return;
+    const updated = { ...user, promoter };
+    persistUserPromoter(id, promoter);
+    const users = get().users.map((u) => (u.id === id ? updated : u));
+    const patch: Partial<LabState> = { users };
+    if (get().currentUser?.id === id) {
+      const profile: UserProfile = updated.role === "admin-super"
+        ? "admin-super"
+        : promoter
+          ? "promoter"
+          : "user";
+      patch.currentUser = updated;
+      patch.profile = profile;
+      patch.consecutiveLosses = { symbols: 0, coffee: 0, capacity: 0 };
+      patch.pendingBatchWins = 0;
+    }
+    set(patch);
+  },
+
+  syncUsers: () => {
+    const rows = loadUsers();
+    set({
+      users: rows.map((r) => ({
+        id: r.id,
+        username: r.username,
+        email: r.email,
+        role: r.role,
+        promoter: r.promoter === 1,
+        createdAt: r.created_at,
+      })),
+    });
+  },
+
+  login: (login, password) => {
+    const row = getUserByLogin(login);
+    if (!row) return false;
+    if (row.password !== password) return false;
+    const user: User = {
+      id: row.id,
+      username: row.username,
+      email: row.email,
+      role: row.role,
+      promoter: row.promoter === 1,
+      createdAt: row.created_at,
+    };
+    const profile: UserProfile = user.role === "admin-super"
+      ? "admin-super"
+      : user.promoter
+        ? "promoter"
+        : "user";
+    set({
+      currentUser: user,
+      profile,
+      consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+      pendingBatchWins: 0,
+    });
+    if (typeof window !== "undefined") {
+      (window as any).__guaranteedWin = user.promoter;
+    }
+    return true;
+  },
+
+  register: (username, email, password) => {
+    const rows = loadUsers();
+    if (rows.some((r) => r.username === username)) return "username";
+    if (rows.some((r) => r.email === email)) return "email";
+    const id = "user_" + String(rows.length + 1).padStart(3, "0");
+    const ok = createUser(id, username, email, password, "user", 0);
+    if (!ok) return "error";
+    get().syncUsers();
+    get().login(username, password);
+    return null;
+  },
+
+  logout: () => {
+    set({ currentUser: null, profile: "user", consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 }, pendingBatchWins: 0 });
+    if (typeof window !== "undefined") {
+      (window as any).__guaranteedWin = false;
+    }
+  },
+
+  resetPassword: (login) => {
+    const row = getUserByLogin(login);
+    if (!row) return null;
+    const newPwd = Math.random().toString(36).slice(2, 8);
+    updateUserPassword(row.id, newPwd);
+    get().syncUsers();
+    return newPwd;
+  },
+
+  triggerBatch: () => {
+    const s = get();
+    const prizePool = Math.floor(s.totalHouseRevenue * 0.007);
+    const numWinners = 1 + Math.floor(Math.random() * 3);
+    const perWin = numWinners > 0 ? Math.max(1, Math.floor(prizePool / numWinners)) : 0;
+    set({
+      pendingBatchWins: numWinners,
+      nextWinPayout: perWin,
+      batchBetsCounter: 0,
+      batchRevenueCounter: 0,
+    });
+  },
+
+  getPayout: (experiment, outcome) => {
+    if (outcome !== "win") return 0;
+    const state = get();
+    const user = state.currentUser;
+    const role = user?.role ?? "user";
+    const isPromoter = user?.promoter ?? false;
+    if (role === "admin-super" || role === "admin" || isPromoter) return 5;
+    const payout = state.nextWinPayout;
+    if (payout > 0) return payout;
+    return 5;
   },
 }));
 

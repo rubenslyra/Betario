@@ -1,5 +1,7 @@
 import { useLab } from "@/lib/lab-store";
-import { Wallet, Gift, Eye, BanknoteArrowDown, Lock, Sigma } from "lucide-react";
+import { Wallet, Gift, Eye, BanknoteArrowDown, Lock, Sigma, Plus } from "lucide-react";
+import { useState } from "react";
+import { PixDepositModal } from "./PixDepositModal";
 
 function Row({
   icon: Icon,
@@ -40,8 +42,11 @@ function Row({
 
 export function FakeBalanceCard() {
   const b = useLab((s) => s.balances);
+  const currentUser = useLab((s) => s.currentUser);
+  const [showDeposit, setShowDeposit] = useState(false);
   return (
     <div className="glass-panel p-4">
+      {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">Saldos fictícios</h3>
         <span className="rounded bg-warning/15 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-warning">
@@ -64,6 +69,16 @@ export function FakeBalanceCard() {
         Saldo visual não é saldo sacável. Bônus simulado pode aumentar a percepção
         de disponibilidade sem mudar o valor real retirável.
       </p>
+      {currentUser && (
+        <button
+          type="button"
+          onClick={() => setShowDeposit(true)}
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-xs font-semibold text-background transition hover:opacity-90"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Depositar via PIX
+        </button>
+      )}
     </div>
   );
 }

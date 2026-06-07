@@ -4,6 +4,7 @@ import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
+import { PixDepositModal } from "@/components/PixDepositModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlassMug, CoffeePot } from "@/components/illustrations/Scene";
 
@@ -22,10 +23,13 @@ export function CoffeeExperiment() {
   const [actual, setActual] = useState<number | null>(null);
   const [pouring, setPouring] = useState(false);
   const [cat, setCat] = useState<"loss" | "near-miss" | "win" | null>(null);
+  const [showDeposit, setShowDeposit] = useState(false);
   const pourAudioRef = useRef<HTMLAudioElement | null>(null);
   const registerBet = useLab((s) => s.registerBet);
   const registerResult = useLab((s) => s.registerResult);
   const rollOutcome = useLab((s) => s.rollOutcome);
+  const getPayout = useLab((s) => s.getPayout);
+  const balanceVisual = useLab((s) => s.balances.visual);
 
   useEffect(
     () => () => {
@@ -51,7 +55,7 @@ export function CoffeeExperiment() {
     setActual(a);
     setCat(outcome);
     setPouring(false);
-    registerResult("coffee", outcome, outcome === "win" ? 5 : 0);
+    registerResult("coffee", outcome, getPayout("coffee", outcome));
 
     const audio = pourAudioRef.current;
     if (audio) {
@@ -62,6 +66,7 @@ export function CoffeeExperiment() {
 
   const pour = (g: number) => {
     if (pouring) return;
+    if (balanceVisual < 1) { setShowDeposit(true); return; }
 
     setGuess(g);
     setPouring(true);
@@ -150,6 +155,21 @@ export function CoffeeExperiment() {
           </div>
         </div>
 
+        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+
+        {balanceVisual < 1 && !pouring && (
+          <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
+            Saldo insuficiente para jogar (R$1,00 por rodada).
+            <button
+              type="button"
+              onClick={() => setShowDeposit(true)}
+              className="ml-2 font-semibold text-primary underline"
+            >
+              Depositar agora
+            </button>
+          </div>
+        )}
+
         <fieldset className="mb-5">
           <legend className="sr-only">Escolha o volume previsto</legend>
           <div className="grid grid-cols-5 gap-2">
@@ -157,9 +177,9 @@ export function CoffeeExperiment() {
               <motion.button
                 key={o.value}
                 onClick={() => pour(o.value)}
-                disabled={pouring}
+                disabled={pouring || balanceVisual < 1}
                 whileTap={{ scale: 0.95 }}
-                whileHover={!pouring ? { y: -2 } : {}}
+                whileHover={!pouring && balanceVisual >= 1 ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}
                 className={`rounded-xl border px-2 py-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value

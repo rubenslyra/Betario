@@ -4,6 +4,7 @@ import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
 import { PresetManager } from "@/components/PresetManager";
+import { PixDepositModal } from "@/components/PixDepositModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { GlassJar } from "@/components/illustrations/Scene";
 
@@ -50,11 +51,15 @@ export function CapacityExperiment() {
   const [actual, setActual] = useState<number | null>(null);
   const [filling, setFilling] = useState(false);
   const [cat, setCat] = useState<"loss" | "near-miss" | "win" | null>(null);
+  const [showDeposit, setShowDeposit] = useState(false);
   const registerBet = useLab((s) => s.registerBet);
   const registerResult = useLab((s) => s.registerResult);
   const rollOutcome = useLab((s) => s.rollOutcome);
+  const getPayout = useLab((s) => s.getPayout);
+  const balanceVisual = useLab((s) => s.balances.visual);
 
   const fill = (g: number) => {
+    if (balanceVisual < 1) { setShowDeposit(true); return; }
     setGuess(g);
     setFilling(true);
     setActual(null);
@@ -71,7 +76,7 @@ export function CapacityExperiment() {
       setActual(a);
       setCat(outcome);
       setFilling(false);
-      registerResult("capacity", outcome, outcome === "win" ? 5 : 0);
+      registerResult("capacity", outcome, getPayout("capacity", outcome));
     }, 1700);
   };
 
@@ -120,6 +125,21 @@ export function CapacityExperiment() {
           </div>
         </div>
 
+        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+
+        {balanceVisual < 1 && !filling && (
+          <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
+            Saldo insuficiente para jogar (R$1,00 por rodada).
+            <button
+              type="button"
+              onClick={() => setShowDeposit(true)}
+              className="ml-2 font-semibold text-primary underline"
+            >
+              Depositar agora
+            </button>
+          </div>
+        )}
+
         <fieldset className="mb-5">
           <legend className="sr-only">Escolha a capacidade estimada</legend>
           <div className="grid grid-cols-4 gap-2">
@@ -127,9 +147,9 @@ export function CapacityExperiment() {
               <motion.button
                 key={o.value}
                 onClick={() => fill(o.value)}
-                disabled={filling}
+                disabled={filling || balanceVisual < 1}
                 whileTap={{ scale: 0.95 }}
-                whileHover={!filling ? { y: -2 } : {}}
+                whileHover={!filling && balanceVisual >= 1 ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}
                 className={`rounded-xl border px-2 py-2.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   guess === o.value
