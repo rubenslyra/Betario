@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLab } from "@/lib/lab-store";
+import { useLab, BET_AMOUNT } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
@@ -210,12 +210,12 @@ export function SymbolsExperiment() {
 
   const spin = () => {
     if (phase === "spinning") return;
-    if (balanceVisual < 1) {
+    if (balanceVisual < BET_AMOUNT) {
       setShowDeposit(true);
       return;
     }
 
-    registerBet(1, "symbols");
+    registerBet(BET_AMOUNT, "symbols");
     setPhase("spinning");
     setCategory(null);
 
@@ -302,7 +302,7 @@ export function SymbolsExperiment() {
           </span>
         </div>
         <p className="mb-6 text-xs text-muted-foreground">
-          Aposta fictícia de R$1,00 por giro. Resultado demonstrativo — sem dinheiro real.
+          Aposta fictícia de R$2,50 por giro. Resultado demonstrativo — sem dinheiro real.
         </p>
 
         <audio ref={rouletteAudioRef} src={ROULETTE_SOUND} preload="auto" aria-hidden="true" />
@@ -362,9 +362,9 @@ export function SymbolsExperiment() {
           })}
         </div>
 
-        {balanceVisual < 1 && !spinning && (
+        {balanceVisual < BET_AMOUNT && !spinning && (
           <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
-            Saldo insuficiente para jogar (R$1,00 por rodada).
+            Saldo insuficiente para jogar (R$2,50 por rodada).
             <button
               type="button"
               onClick={() => setShowDeposit(true)}
@@ -379,7 +379,7 @@ export function SymbolsExperiment() {
 
         <motion.button
           onClick={spin}
-          disabled={spinning || balanceVisual < 1}
+          disabled={spinning || balanceVisual < BET_AMOUNT}
           aria-busy={spinning}
           whileTap={{ scale: 0.97 }}
           whileHover={!spinning && balanceVisual >= 1 ? { scale: 1.01 } : {}}

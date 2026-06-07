@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLab } from "@/lib/lab-store";
+import { useLab, BET_AMOUNT } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
@@ -66,7 +66,7 @@ export function CoffeeExperiment() {
 
   const pour = (g: number) => {
     if (pouring) return;
-    if (balanceVisual < 1) {
+    if (balanceVisual < BET_AMOUNT) {
       setShowDeposit(true);
       return;
     }
@@ -75,7 +75,7 @@ export function CoffeeExperiment() {
     setPouring(true);
     setActual(null);
     setCat(null);
-    registerBet(1, "coffee");
+    registerBet(BET_AMOUNT, "coffee");
 
     const audio = pourAudioRef.current;
     if (!audio) {
@@ -132,7 +132,7 @@ export function CoffeeExperiment() {
           </span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
-          Aposta fictícia de R$1,00. Preveja quanto a jarra vai derramar.
+          Aposta fictícia de R$2,50. Preveja quanto a jarra vai derramar.
         </p>
 
         <audio ref={pourAudioRef} src={COFFEE_SOUND} preload="auto" aria-hidden="true" />
@@ -160,9 +160,9 @@ export function CoffeeExperiment() {
 
         {showDeposit && <PixDepositModal blocking onClose={() => setShowDeposit(false)} />}
 
-        {balanceVisual < 1 && !pouring && (
+        {balanceVisual < BET_AMOUNT && !pouring && (
           <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
-            Saldo insuficiente para jogar (R$1,00 por rodada).
+            Saldo insuficiente para jogar (R$2,50 por rodada).
             <button
               type="button"
               onClick={() => setShowDeposit(true)}
@@ -180,7 +180,7 @@ export function CoffeeExperiment() {
               <motion.button
                 key={o.value}
                 onClick={() => pour(o.value)}
-                disabled={pouring || balanceVisual < 1}
+                disabled={pouring || balanceVisual < BET_AMOUNT}
                 whileTap={{ scale: 0.95 }}
                 whileHover={!pouring && balanceVisual >= 1 ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}

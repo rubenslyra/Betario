@@ -87,6 +87,8 @@ export type FrictionEntry = {
   message: string;
 };
 
+export const BET_AMOUNT = 2.5;
+
 const defaultParams: Record<ExperimentKey, ExperimentParams> = {
   symbols: { roundLimit: 20, winChance: 0.04, nearMissChance: 0.28, bonusFraction: 0.76 },
   coffee: { roundLimit: 15, winChance: 0.1, nearMissChance: 0.25, bonusFraction: 0.76 },

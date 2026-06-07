@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLab } from "@/lib/lab-store";
+import { useLab, BET_AMOUNT } from "@/lib/lab-store";
 import { CharacterReaction } from "@/components/CharacterReaction";
 import { ExperimentControls } from "@/components/ExperimentControls";
 import { ExperimentCharts } from "@/components/ExperimentCharts";
@@ -59,7 +59,7 @@ export function CapacityExperiment() {
   const balanceVisual = useLab((s) => s.balances.visual);
 
   const fill = (g: number) => {
-    if (balanceVisual < 1) {
+    if (balanceVisual < BET_AMOUNT) {
       setShowDeposit(true);
       return;
     }
@@ -67,7 +67,7 @@ export function CapacityExperiment() {
     setFilling(true);
     setActual(null);
     setCat(null);
-    registerBet(1, "capacity");
+    registerBet(BET_AMOUNT, "capacity");
     setTimeout(() => {
       const outcome = rollOutcome("capacity");
       let a: number;
@@ -113,7 +113,7 @@ export function CapacityExperiment() {
           </span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
-          Aposta fictícia de R$1,00. Estime quanto cabe no pote.
+          Aposta fictícia de R$2,50. Estime quanto cabe no pote.
         </p>
 
         <div
@@ -139,9 +139,9 @@ export function CapacityExperiment() {
 
         {showDeposit && <PixDepositModal blocking onClose={() => setShowDeposit(false)} />}
 
-        {balanceVisual < 1 && !filling && (
+        {balanceVisual < BET_AMOUNT && !filling && (
           <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">
-            Saldo insuficiente para jogar (R$1,00 por rodada).
+            Saldo insuficiente para jogar (R$2,50 por rodada).
             <button
               type="button"
               onClick={() => setShowDeposit(true)}
@@ -159,7 +159,7 @@ export function CapacityExperiment() {
               <motion.button
                 key={o.value}
                 onClick={() => fill(o.value)}
-                disabled={filling || balanceVisual < 1}
+                disabled={filling || balanceVisual < BET_AMOUNT}
                 whileTap={{ scale: 0.95 }}
                 whileHover={!filling && balanceVisual >= 1 ? { y: -2 } : {}}
                 aria-pressed={guess === o.value}
