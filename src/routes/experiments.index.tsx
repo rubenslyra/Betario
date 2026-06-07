@@ -37,9 +37,15 @@ export const Route = createFileRoute("/experiments/")({
 function SymbolsArt() {
   return (
     <div className="flex items-end gap-1">
-      <div className="scale-90"><Pera /></div>
-      <div className="-mt-2 scale-110"><Maca /></div>
-      <div className="scale-90"><CafeBean /></div>
+      <div className="scale-90">
+        <Pera />
+      </div>
+      <div className="-mt-2 scale-110">
+        <Maca />
+      </div>
+      <div className="scale-90">
+        <CafeBean />
+      </div>
     </div>
   );
 }
@@ -47,14 +53,32 @@ function SymbolsArt() {
 function CoffeeArt() {
   return (
     <div className="flex items-end gap-1">
-      <div className="scale-90"><CafeBean /></div>
-      <div className="-ml-1 scale-110"><Xicara /></div>
-      <div className="scale-90"><Maca /></div>
+      <div className="scale-90">
+        <CafeBean />
+      </div>
+      <div className="-ml-1 scale-110">
+        <Xicara />
+      </div>
+      <div className="scale-90">
+        <Maca />
+      </div>
     </div>
   );
 }
 
-function Card({ to, accent, art, title, desc }: { to: string; accent: string; art: ReactNode; title: string; desc: string }) {
+function Card({
+  to,
+  accent,
+  art,
+  title,
+  desc,
+}: {
+  to: string;
+  accent: string;
+  art: ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
     <Link
       to={to}
@@ -100,7 +124,12 @@ const cards: {
     art: (
       <svg viewBox="0 0 64 64" className="h-14 w-14" aria-label="Pote">
         <rect x="14" y="8" width="36" height="6" rx="2" fill="#8aa8c8" opacity="0.6" />
-        <path d="M16 16 h32 v36 q0 4 -4 4 h-24 q-4 0 -4 -4z" fill="oklch(0.95 0.02 200 / 0.3)" stroke="#aac3d8" strokeWidth="1.5" />
+        <path
+          d="M16 16 h32 v36 q0 4 -4 4 h-24 q-4 0 -4 -4z"
+          fill="oklch(0.95 0.02 200 / 0.3)"
+          stroke="#aac3d8"
+          strokeWidth="1.5"
+        />
         <rect x="20" y="36" width="24" height="18" rx="2" fill="oklch(0.78 0.17 145 / 0.5)" />
         <circle cx="24" cy="40" r="2" fill="#5fbedc" />
         <circle cx="32" cy="44" r="2" fill="#c9a84c" />
@@ -119,8 +148,8 @@ function ExperimentsIndex() {
         <div>
           <h1 className="mb-2 text-3xl font-bold">Selecione um experimento</h1>
           <p className="mb-8 text-sm text-muted-foreground">
-            Cada experimento usa saldo fictício, ilustrações educativas e registra todos os eventos no
-            ledger.
+            Cada experimento usa saldo fictício, ilustrações educativas e registra todos os eventos
+            no ledger.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             {cards.map((c) => (

@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { useLab } from "@/lib/lab-store";
-import { Beaker, Eye, EyeOff, LogIn, UserPlus, KeyRound, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Beaker,
+  Eye,
+  EyeOff,
+  LogIn,
+  UserPlus,
+  KeyRound,
+  ArrowLeft,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 
 type AuthMode = "login" | "register" | "recover" | "recover-done";
 
@@ -28,19 +38,34 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     reset();
-    if (!loginField || !password) { setError("Preencha todos os campos."); return; }
+    if (!loginField || !password) {
+      setError("Preencha todos os campos.");
+      return;
+    }
     const ok = login(loginField, password);
-    if (ok) { onDone?.(); return; }
+    if (ok) {
+      onDone?.();
+      return;
+    }
     setError("Usuário/email ou senha inválidos.");
   };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     reset();
-    if (!regUser || !regEmail || !regPwd) { setError("Preencha todos os campos."); return; }
-    if (regPwd.length < 4) { setError("A senha deve ter no mínimo 4 caracteres."); return; }
+    if (!regUser || !regEmail || !regPwd) {
+      setError("Preencha todos os campos.");
+      return;
+    }
+    if (regPwd.length < 4) {
+      setError("A senha deve ter no mínimo 4 caracteres.");
+      return;
+    }
     const err = register(regUser, regEmail, regPwd);
-    if (!err) { onDone?.(); return; }
+    if (!err) {
+      onDone?.();
+      return;
+    }
     if (err === "username") setError("Este nome de usuário já existe.");
     else if (err === "email") setError("Este email já está cadastrado.");
     else if (err) setError("Erro ao criar conta. Tente novamente.");
@@ -49,9 +74,15 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
   const handleRecover = (e: React.FormEvent) => {
     e.preventDefault();
     reset();
-    if (!recoverField) { setError("Informe seu usuário ou email."); return; }
+    if (!recoverField) {
+      setError("Informe seu usuário ou email.");
+      return;
+    }
     const result = resetPassword(recoverField);
-    if (!result) { setError("Usuário/email não encontrado."); return; }
+    if (!result) {
+      setError("Usuário/email não encontrado.");
+      return;
+    }
     setNewPwd(result);
     setMode("recover-done");
   };
@@ -59,8 +90,7 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
   const container =
     "flex min-h-dvh items-center justify-center bg-gradient-to-br from-background via-panel to-background p-4";
 
-  const card =
-    "glass-panel w-full max-w-sm border border-border p-8 shadow-2xl";
+  const card = "glass-panel w-full max-w-sm border border-border p-8 shadow-2xl";
 
   const input =
     "w-full rounded-lg border border-border bg-panel-soft px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition";
@@ -95,7 +125,9 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
         {mode === "login" && (
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className={label} htmlFor="auth-login">Usuário ou email</label>
+              <label className={label} htmlFor="auth-login">
+                Usuário ou email
+              </label>
               <input
                 id="auth-login"
                 className={input}
@@ -107,7 +139,9 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
               />
             </div>
             <div>
-              <label className={label} htmlFor="auth-pwd">Senha</label>
+              <label className={label} htmlFor="auth-pwd">
+                Senha
+              </label>
               <div className="relative">
                 <input
                   id="auth-pwd"
@@ -133,10 +167,24 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
               Entrar
             </button>
             <div className="flex justify-between text-xs">
-              <button type="button" onClick={() => { reset(); setMode("register"); }} className="text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => {
+                  reset();
+                  setMode("register");
+                }}
+                className="text-primary hover:underline"
+              >
                 Criar conta
               </button>
-              <button type="button" onClick={() => { reset(); setMode("recover"); }} className="text-muted-foreground hover:underline">
+              <button
+                type="button"
+                onClick={() => {
+                  reset();
+                  setMode("recover");
+                }}
+                className="text-muted-foreground hover:underline"
+              >
                 Esqueci a senha
               </button>
             </div>
@@ -145,22 +193,64 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
 
         {mode === "register" && (
           <form onSubmit={handleRegister} className="space-y-4">
-            <button type="button" onClick={() => { reset(); setMode("login"); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setMode("login");
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="h-3 w-3" /> Voltar
             </button>
             <div>
-              <label className={label} htmlFor="reg-user">Usuário</label>
-              <input id="reg-user" className={input} placeholder="meu.usuario" value={regUser} onChange={(e) => setRegUser(e.target.value)} autoFocus autoComplete="username" />
+              <label className={label} htmlFor="reg-user">
+                Usuário
+              </label>
+              <input
+                id="reg-user"
+                className={input}
+                placeholder="meu.usuario"
+                value={regUser}
+                onChange={(e) => setRegUser(e.target.value)}
+                autoFocus
+                autoComplete="username"
+              />
             </div>
             <div>
-              <label className={label} htmlFor="reg-email">Email</label>
-              <input id="reg-email" type="email" className={input} placeholder="meu@email.com" value={regEmail} onChange={(e) => setRegEmail(e.target.value)} autoComplete="email" />
+              <label className={label} htmlFor="reg-email">
+                Email
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                className={input}
+                placeholder="meu@email.com"
+                value={regEmail}
+                onChange={(e) => setRegEmail(e.target.value)}
+                autoComplete="email"
+              />
             </div>
             <div>
-              <label className={label} htmlFor="reg-pwd">Senha</label>
+              <label className={label} htmlFor="reg-pwd">
+                Senha
+              </label>
               <div className="relative">
-                <input id="reg-pwd" type={showPwd ? "text" : "password"} className={input} placeholder="mín. 4 caracteres" value={regPwd} onChange={(e) => setRegPwd(e.target.value)} autoComplete="new-password" />
-                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                <input
+                  id="reg-pwd"
+                  type={showPwd ? "text" : "password"}
+                  className={input}
+                  placeholder="mín. 4 caracteres"
+                  value={regPwd}
+                  onChange={(e) => setRegPwd(e.target.value)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -174,14 +264,33 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
 
         {mode === "recover" && (
           <form onSubmit={handleRecover} className="space-y-4">
-            <button type="button" onClick={() => { reset(); setMode("login"); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+            <button
+              type="button"
+              onClick={() => {
+                reset();
+                setMode("login");
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
               <ArrowLeft className="h-3 w-3" /> Voltar
             </button>
             <div>
-              <label className={label} htmlFor="recover-field">Usuário ou email</label>
-              <input id="recover-field" className={input} placeholder="joao.silva ou joao@email.com" value={recoverField} onChange={(e) => setRecoverField(e.target.value)} autoFocus />
+              <label className={label} htmlFor="recover-field">
+                Usuário ou email
+              </label>
+              <input
+                id="recover-field"
+                className={input}
+                placeholder="joao.silva ou joao@email.com"
+                value={recoverField}
+                onChange={(e) => setRecoverField(e.target.value)}
+                autoFocus
+              />
             </div>
-            <button type="submit" className={`${btn} bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30`}>
+            <button
+              type="submit"
+              className={`${btn} bg-gold/20 text-gold border border-gold/30 hover:bg-gold/30`}
+            >
               <KeyRound className="mr-2 inline h-4 w-4" />
               Recuperar senha
             </button>
@@ -197,7 +306,9 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
               <CheckCircle className="h-5 w-5 text-success shrink-0" />
               <div>
                 <p className="text-xs font-semibold text-success">Senha redefinida!</p>
-                <p className="mt-1 font-mono text-lg font-bold tracking-wider text-foreground">{newPwd}</p>
+                <p className="mt-1 font-mono text-lg font-bold tracking-wider text-foreground">
+                  {newPwd}
+                </p>
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   Anote esta senha. Use-a para fazer login.
                 </p>
@@ -205,7 +316,12 @@ export function AuthScreen({ onDone }: { onDone?: () => void }) {
             </div>
             <button
               type="button"
-              onClick={() => { reset(); setLoginField(""); setPassword(newPwd); setMode("login"); }}
+              onClick={() => {
+                reset();
+                setLoginField("");
+                setPassword(newPwd);
+                setMode("login");
+              }}
               className={`${btn} bg-primary text-background hover:opacity-90`}
             >
               <LogIn className="mr-2 inline h-4 w-4" />

@@ -24,9 +24,9 @@ function LedgerPage() {
     <AppShell>
       <h1 className="mb-1 text-3xl font-bold">Ledger educacional</h1>
       <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
-        Livro-razão educacional. Registra eventos fictícios para mostrar como
-        saldo visual, bônus, saldo sacável e fricções podem ser separados dentro
-        de uma plataforma. Inspirado em blockchain, sem usar blockchain real.
+        Livro-razão educacional. Registra eventos fictícios para mostrar como saldo visual, bônus,
+        saldo sacável e fricções podem ser separados dentro de uma plataforma. Inspirado em
+        blockchain, sem usar blockchain real.
       </p>
 
       <div className="glass-panel overflow-hidden">
@@ -50,9 +50,7 @@ function LedgerPage() {
                 <tr key={e.id} className="border-t border-border/40 hover:bg-glass">
                   <td className="px-3 py-2 text-muted-foreground">{e.id}</td>
                   <td className="px-3 py-2">{e.userId}</td>
-                  <td className={`px-3 py-2 font-semibold ${typeColor[e.type] ?? ""}`}>
-                    {e.type}
-                  </td>
+                  <td className={`px-3 py-2 font-semibold ${typeColor[e.type] ?? ""}`}>{e.type}</td>
                   <td className="px-3 py-2 text-right">R$ {e.amount.toFixed(2)}</td>
                   <td className="px-3 py-2 text-right text-muted-foreground">
                     {e.beforeBalance.toFixed(2)}

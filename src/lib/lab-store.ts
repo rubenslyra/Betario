@@ -94,7 +94,12 @@ const defaultParams: Record<ExperimentKey, ExperimentParams> = {
 };
 
 const emptyStats: ExperimentStats = {
-  rounds: 0, wins: 0, nearMisses: 0, losses: 0, totalBet: 0, totalPayout: 0,
+  rounds: 0,
+  wins: 0,
+  nearMisses: 0,
+  losses: 0,
+  totalBet: 0,
+  totalPayout: 0,
 };
 
 type Stats = {
@@ -167,11 +172,21 @@ type LabState = {
 };
 
 const initialBalances: Balances = {
-  deposited: 50, bonus: 0, visual: 50, withdrawable: 50, blocked: 0, fractional: 0,
+  deposited: 0,
+  bonus: 0,
+  visual: 0,
+  withdrawable: 0,
+  blocked: 0,
+  fractional: 0,
 };
 
 const initialStats: Stats = {
-  rounds: 0, losses: 0, nearMisses: 0, wins: 0, withdrawAttempts: 0, frictionEvents: 0,
+  rounds: 0,
+  losses: 0,
+  nearMisses: 0,
+  wins: 0,
+  withdrawAttempts: 0,
+  frictionEvents: 0,
 };
 
 function uid() {
@@ -192,11 +207,15 @@ function pushEvent(
   const created: LedgerEvent = {
     id: uid(),
     userId: "user_fict_001",
-    type, amount,
-    beforeBalance: before, afterBalance: after,
-    source, target,
+    type,
+    amount,
+    beforeBalance: before,
+    afterBalance: after,
+    source,
+    target,
     timestamp: new Date().toISOString(),
-    note, experiment,
+    note,
+    experiment,
   };
   return { events: [created, ...events].slice(0, 400), created };
 }
@@ -243,8 +262,13 @@ export const useLab = create<LabState>((set, get) => ({
     const newVisual = newDeposited + b.bonus;
 
     const r = pushEvent(
-      get().events, "DEPOSITO_FICTICIO", amount, before, newVisual,
-      "pix_simulado", "saldo_visual",
+      get().events,
+      "DEPOSITO_FICTICIO",
+      amount,
+      before,
+      newVisual,
+      "pix_simulado",
+      "saldo_visual",
       `Depósito via PIX simulado de R$${amount.toFixed(2)}.`,
     );
     persistEvent(r.created);
@@ -269,7 +293,12 @@ export const useLab = create<LabState>((set, get) => ({
       });
       // Derive aggregate stats from per-experiment stats and events
       const aggregate: Stats = {
-        rounds: 0, wins: 0, losses: 0, nearMisses: 0, withdrawAttempts: 0, frictionEvents: 0,
+        rounds: 0,
+        wins: 0,
+        losses: 0,
+        nearMisses: 0,
+        withdrawAttempts: 0,
+        frictionEvents: 0,
       };
       (Object.keys(experiments) as ExperimentKey[]).forEach((k) => {
         aggregate.rounds += experiments[k].stats.rounds;
@@ -300,25 +329,6 @@ export const useLab = create<LabState>((set, get) => ({
         stats: aggregate,
         users,
       });
-
-      // Seed initial deposit event for first-time visitors
-      if (!snap.balances && snap.events.length === 0) {
-        const seed: LedgerEvent = {
-          id: uid(),
-          userId: "user_fict_001",
-          type: "DEPOSITO_FICTICIO",
-          amount: 50, beforeBalance: 0, afterBalance: 50,
-          source: "wallet_ficticia", target: "saldo_visual",
-          timestamp: new Date().toISOString(),
-          note: "Saldo inicial fictício para fins didáticos.",
-        };
-        set({ events: [seed] });
-        persistEvent(seed);
-        persistBalances(initialBalances);
-        (Object.keys(experiments) as ExperimentKey[]).forEach((k) => {
-          persistExperiment(k, experiments[k].params, experiments[k].stats, null);
-        });
-      }
     } catch (e) {
       console.warn("[lab-store] hydrate failed, running in-memory", e);
       set({ ready: true });
@@ -338,24 +348,38 @@ export const useLab = create<LabState>((set, get) => ({
     const newFractional = newBonus % 1;
 
     const r1 = pushEvent(
-      get().events, "DEPOSITO_FICTICIO", amount, before, newVisual,
-      "wallet_ficticia", "saldo_visual",
+      get().events,
+      "DEPOSITO_FICTICIO",
+      amount,
+      before,
+      newVisual,
+      "wallet_ficticia",
+      "saldo_visual",
       `Depósito fictício de R$${amount.toFixed(2)}.`,
     );
     persistEvent(r1.created);
     let events = r1.events;
     if (bonus > 0) {
       const r2 = pushEvent(
-        events, "BONUS_SIMULADO", bonus, newVisual - bonus, newVisual,
-        "promo_simulada", "saldo_bonus",
+        events,
+        "BONUS_SIMULADO",
+        bonus,
+        newVisual - bonus,
+        newVisual,
+        "promo_simulada",
+        "saldo_bonus",
         `Bônus fracionado simulado de R$${bonus.toFixed(2)} (não sacável).`,
       );
       persistEvent(r2.created);
       events = r2.events;
     }
     const balances: Balances = {
-      deposited: newDeposited, bonus: newBonus, visual: newVisual,
-      withdrawable: newWithdrawable, blocked: newBlocked, fractional: newFractional,
+      deposited: newDeposited,
+      bonus: newBonus,
+      visual: newVisual,
+      withdrawable: newWithdrawable,
+      blocked: newBlocked,
+      fractional: newFractional,
     };
     persistBalances(balances);
     set({ balances, events });
@@ -369,13 +393,20 @@ export const useLab = create<LabState>((set, get) => ({
     const newWithdrawable = Math.max(0, b.withdrawable - amount);
     const exp = get().experiments[experiment];
     const r = pushEvent(
-      get().events, "APOSTA_FICTICIA", amount, before, newVisual,
-      "saldo_visual", "pool_simulada",
-      `Aposta fictícia de R$${amount.toFixed(2)}.`, experiment,
+      get().events,
+      "APOSTA_FICTICIA",
+      amount,
+      before,
+      newVisual,
+      "saldo_visual",
+      "pool_simulada",
+      `Aposta fictícia de R$${amount.toFixed(2)}.`,
+      experiment,
     );
     const balances = { ...b, visual: newVisual, withdrawable: newWithdrawable };
     const newExp: ExperimentState = {
-      ...exp, stats: { ...exp.stats, totalBet: exp.stats.totalBet + amount },
+      ...exp,
+      stats: { ...exp.stats, totalBet: exp.stats.totalBet + amount },
     };
 
     const s = get();
@@ -414,7 +445,8 @@ export const useLab = create<LabState>((set, get) => ({
     persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({
       ...patch,
-      balances, events: r.events,
+      balances,
+      events: r.events,
       experiments: { ...get().experiments, [experiment]: newExp },
     });
   },
@@ -485,20 +517,31 @@ export const useLab = create<LabState>((set, get) => ({
       exp.params.roundLimit > 0 && newExpStats.rounds % exp.params.roundLimit === 0;
 
     const r = pushEvent(
-      get().events, "RESULTADO_SIMULADO", payout, before, newVisual,
-      "pool_simulada", "saldo_visual",
+      get().events,
+      "RESULTADO_SIMULADO",
+      payout,
+      before,
+      newVisual,
+      "pool_simulada",
+      "saldo_visual",
       `Resultado demonstrativo (${category}). Payout fictício R$${payout.toFixed(2)}.`,
       experiment,
     );
     const balances: Balances = {
-      deposited: newDeposited, bonus: newBonus, visual: newVisual,
-      withdrawable: newWithdrawable, blocked: newBlocked, fractional: newBonus % 1,
+      deposited: newDeposited,
+      bonus: newBonus,
+      visual: newVisual,
+      withdrawable: newWithdrawable,
+      blocked: newBlocked,
+      fractional: newBonus % 1,
     };
     persistBalances(balances);
     persistEvent(r.created);
     persistExperiment(experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({
-      balances, events: r.events, stats: newStats,
+      balances,
+      events: r.events,
+      stats: newStats,
       experiments: { ...get().experiments, [experiment]: newExp },
       houseFunds: get().houseFunds - payout,
       showReflectiveModal: reachedLimit || newStats.rounds % 10 === 0,
@@ -510,18 +553,29 @@ export const useLab = create<LabState>((set, get) => ({
     const alerts: string[] = [];
     if (b.bonus > 0) alerts.push("Fricção detectada: o saldo visual inclui bônus não sacável.");
     if (b.withdrawable % 1 !== 0 || b.fractional > 0)
-      alerts.push("Fricção detectada: o saldo possui centavos, mas a regra simulada permite apenas saque inteiro.");
+      alerts.push(
+        "Fricção detectada: o saldo possui centavos, mas a regra simulada permite apenas saque inteiro.",
+      );
     alerts.push("Fricção detectada: o usuário não pode escolher saque parcial.");
 
     const stats = get().stats;
     const ts = new Date().toISOString();
-    const newEntries: FrictionEntry[] = alerts.map((m) => ({ id: uid(), timestamp: ts, message: m }));
+    const newEntries: FrictionEntry[] = alerts.map((m) => ({
+      id: uid(),
+      timestamp: ts,
+      message: m,
+    }));
     newEntries.forEach(persistFriction);
     const frictions = [...newEntries, ...get().frictions].slice(0, 200);
 
     const r = pushEvent(
-      get().events, "TENTATIVA_SAQUE", b.withdrawable, b.visual, b.visual,
-      "saldo_sacavel", "wallet_ficticia",
+      get().events,
+      "TENTATIVA_SAQUE",
+      b.withdrawable,
+      b.visual,
+      b.visual,
+      "saldo_sacavel",
+      "wallet_ficticia",
       `Tentativa de saque fictício. ${alerts.length} fricção(ões) detectada(s).`,
     );
     persistEvent(r.created);
@@ -531,7 +585,8 @@ export const useLab = create<LabState>((set, get) => ({
         withdrawAttempts: stats.withdrawAttempts + 1,
         frictionEvents: stats.frictionEvents + alerts.length,
       },
-      events: r.events, frictions,
+      events: r.events,
+      frictions,
     });
     return alerts;
   },
@@ -564,7 +619,9 @@ export const useLab = create<LabState>((set, get) => ({
     });
     set({
       balances: initialBalances,
-      events: [], stats: initialStats, frictions: [],
+      events: [],
+      stats: initialStats,
+      frictions: [],
       experiments: initialExperiments,
     });
   },
@@ -593,7 +650,9 @@ export const useLab = create<LabState>((set, get) => ({
     if (!preset) return;
     const exp = get().experiments[preset.experiment];
     const newExp: ExperimentState = {
-      ...exp, params: { ...preset.params }, activePresetId: preset.id,
+      ...exp,
+      params: { ...preset.params },
+      activePresetId: preset.id,
     };
     persistExperiment(preset.experiment, newExp.params, newExp.stats, newExp.activePresetId);
     set({ experiments: { ...get().experiments, [preset.experiment]: newExp } });
@@ -620,7 +679,7 @@ export const useLab = create<LabState>((set, get) => ({
       pendingBatchWins: 0,
     });
     if (typeof window !== "undefined") {
-      (window as any).__guaranteedWin = profile === "promoter";
+      (window as unknown as Record<string, unknown>).__guaranteedWin = profile === "promoter";
     }
   },
 
@@ -628,19 +687,26 @@ export const useLab = create<LabState>((set, get) => ({
   lockAdmin: () => {
     const def = get().users.find((u) => u.id === "user_001") ?? get().users[0] ?? null;
     const profile: UserProfile = def
-      ? def.role === "admin-super" ? "admin-super" : def.promoter ? "promoter" : "user"
+      ? def.role === "admin-super"
+        ? "admin-super"
+        : def.promoter
+          ? "promoter"
+          : "user"
       : "user";
-    set({ adminUnlocked: false, currentUser: def, profile, consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 }, pendingBatchWins: 0 });
+    set({
+      adminUnlocked: false,
+      currentUser: def,
+      profile,
+      consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+      pendingBatchWins: 0,
+    });
   },
 
   setCurrentUser: (id) => {
     const user = get().users.find((u) => u.id === id);
     if (!user) return;
-    const profile: UserProfile = user.role === "admin-super"
-      ? "admin-super"
-      : user.promoter
-        ? "promoter"
-        : "user";
+    const profile: UserProfile =
+      user.role === "admin-super" ? "admin-super" : user.promoter ? "promoter" : "user";
     set({
       currentUser: user,
       profile,
@@ -648,7 +714,7 @@ export const useLab = create<LabState>((set, get) => ({
       pendingBatchWins: 0,
     });
     if (typeof window !== "undefined") {
-      (window as any).__guaranteedWin = user.promoter;
+      (window as unknown as Record<string, unknown>).__guaranteedWin = user.promoter;
     }
   },
 
@@ -660,11 +726,8 @@ export const useLab = create<LabState>((set, get) => ({
     const users = get().users.map((u) => (u.id === id ? updated : u));
     const patch: Partial<LabState> = { users };
     if (get().currentUser?.id === id) {
-      const profile: UserProfile = role === "admin-super"
-        ? "admin-super"
-        : updated.promoter
-          ? "promoter"
-          : "user";
+      const profile: UserProfile =
+        role === "admin-super" ? "admin-super" : updated.promoter ? "promoter" : "user";
       patch.currentUser = updated;
       patch.profile = profile;
       patch.consecutiveLosses = { symbols: 0, coffee: 0, capacity: 0 };
@@ -681,11 +744,8 @@ export const useLab = create<LabState>((set, get) => ({
     const users = get().users.map((u) => (u.id === id ? updated : u));
     const patch: Partial<LabState> = { users };
     if (get().currentUser?.id === id) {
-      const profile: UserProfile = updated.role === "admin-super"
-        ? "admin-super"
-        : promoter
-          ? "promoter"
-          : "user";
+      const profile: UserProfile =
+        updated.role === "admin-super" ? "admin-super" : promoter ? "promoter" : "user";
       patch.currentUser = updated;
       patch.profile = profile;
       patch.consecutiveLosses = { symbols: 0, coffee: 0, capacity: 0 };
@@ -720,11 +780,8 @@ export const useLab = create<LabState>((set, get) => ({
       promoter: row.promoter === 1,
       createdAt: row.created_at,
     };
-    const profile: UserProfile = user.role === "admin-super"
-      ? "admin-super"
-      : user.promoter
-        ? "promoter"
-        : "user";
+    const profile: UserProfile =
+      user.role === "admin-super" ? "admin-super" : user.promoter ? "promoter" : "user";
     set({
       currentUser: user,
       profile,
@@ -732,7 +789,7 @@ export const useLab = create<LabState>((set, get) => ({
       pendingBatchWins: 0,
     });
     if (typeof window !== "undefined") {
-      (window as any).__guaranteedWin = user.promoter;
+      (window as unknown as Record<string, unknown>).__guaranteedWin = user.promoter;
     }
     return true;
   },
@@ -750,9 +807,14 @@ export const useLab = create<LabState>((set, get) => ({
   },
 
   logout: () => {
-    set({ currentUser: null, profile: "user", consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 }, pendingBatchWins: 0 });
+    set({
+      currentUser: null,
+      profile: "user",
+      consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
+      pendingBatchWins: 0,
+    });
     if (typeof window !== "undefined") {
-      (window as any).__guaranteedWin = false;
+      (window as unknown as Record<string, unknown>).__guaranteedWin = false;
     }
   },
 

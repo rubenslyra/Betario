@@ -66,7 +66,10 @@ export function CoffeeExperiment() {
 
   const pour = (g: number) => {
     if (pouring) return;
-    if (balanceVisual < 1) { setShowDeposit(true); return; }
+    if (balanceVisual < 1) {
+      setShowDeposit(true);
+      return;
+    }
 
     setGuess(g);
     setPouring(true);
@@ -155,7 +158,7 @@ export function CoffeeExperiment() {
           </div>
         </div>
 
-        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+        {showDeposit && <PixDepositModal blocking onClose={() => setShowDeposit(false)} />}
 
         {balanceVisual < 1 && !pouring && (
           <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">

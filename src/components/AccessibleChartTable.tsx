@@ -71,7 +71,10 @@ export function AccessibleChartTable({
       </div>
 
       {open && (
-        <div id={tableId} className="overflow-x-auto rounded-md border border-border bg-panel-soft/50">
+        <div
+          id={tableId}
+          className="overflow-x-auto rounded-md border border-border bg-panel-soft/50"
+        >
           <table className="w-full text-xs" aria-label={title}>
             <caption className="sr-only">
               {title}. {summary}

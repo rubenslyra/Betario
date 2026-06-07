@@ -210,7 +210,10 @@ export function SymbolsExperiment() {
 
   const spin = () => {
     if (phase === "spinning") return;
-    if (balanceVisual < 1) { setShowDeposit(true); return; }
+    if (balanceVisual < 1) {
+      setShowDeposit(true);
+      return;
+    }
 
     registerBet(1, "symbols");
     setPhase("spinning");
@@ -372,7 +375,7 @@ export function SymbolsExperiment() {
           </div>
         )}
 
-        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+        {showDeposit && <PixDepositModal blocking onClose={() => setShowDeposit(false)} />}
 
         <motion.button
           onClick={spin}

@@ -11,8 +11,12 @@ export function EducationalBanner() {
           Aplicação Educacional
         </span>
         <p className="text-xs leading-snug text-muted-foreground sm:text-[13px]">
-          Este laboratório usa saldo fictício para explicar probabilidade, UX persuasiva e riscos digitais.
-          <span className="hidden sm:inline"> Não é bet, não aceita dinheiro real e não recomenda apostas.</span>
+          Este laboratório usa saldo fictício para explicar probabilidade, UX persuasiva e riscos
+          digitais.
+          <span className="hidden sm:inline">
+            {" "}
+            Não é bet, não aceita dinheiro real e não recomenda apostas.
+          </span>
         </p>
       </div>
     </div>

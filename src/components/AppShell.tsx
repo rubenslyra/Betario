@@ -3,11 +3,20 @@ import { EducationalBanner } from "./EducationalBanner";
 import { ReflectiveModal } from "./ReflectiveModal";
 import { AdminPanel } from "./AdminPanel";
 import { AuthScreen } from "./AuthScreen";
-import { Beaker, BookOpen, FileText, FlaskConical, Home, ScrollText, LogOut, LogIn, X } from "lucide-react";
+import {
+  Beaker,
+  BookOpen,
+  FileText,
+  FlaskConical,
+  Home,
+  ScrollText,
+  LogOut,
+  LogIn,
+  X,
+} from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useHydrateLab } from "@/hooks/use-hydrate-lab";
 import { useLab } from "@/lib/lab-store";
-
 
 const navItems = [
   { to: "/", label: "Início", icon: Home },
@@ -27,30 +36,42 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [showAuth, setShowAuth] = useState(false);
   useHydrateLab();
 
-  if (!ready) return <div className="flex min-h-dvh items-center justify-center text-sm text-muted-foreground">Carregando…</div>;
-
   useEffect(() => {
+    if (!ready) return;
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "A") {
         e.preventDefault();
         if (adminUnlocked) return;
         const role = currentUser?.role ?? "user";
         if (role === "user") {
-          console.log("%c🚫 Acesso negado. Permissão insuficiente.", "font-size:14px; font-weight:bold; color: #e63946");
+          console.log(
+            "%c🚫 Acesso negado. Permissão insuficiente.",
+            "font-size:14px; font-weight:bold; color: #e63946",
+          );
           return;
         }
         const pwd = prompt("Digite a senha de acesso:");
         if (pwd === "admin-super") {
           unlockAdmin();
-          const label = role === "admin-super" ? "admin-super" : role === "admin" ? "admin" : "mediator";
-          console.log(`%c🔓 Modo ${label} ativado.`, "font-size:16px; font-weight:bold; color: #e63946");
+          const label =
+            role === "admin-super" ? "admin-super" : role === "admin" ? "admin" : "mediator";
+          console.log(
+            `%c🔓 Modo ${label} ativado.`,
+            "font-size:16px; font-weight:bold; color: #e63946",
+          );
         }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [adminUnlocked, unlockAdmin, currentUser]);
+  }, [adminUnlocked, unlockAdmin, currentUser, ready]);
 
+  if (!ready)
+    return (
+      <div className="flex min-h-dvh items-center justify-center text-sm text-muted-foreground">
+        Carregando…
+      </div>
+    );
 
   return (
     <div className="min-h-dvh">
@@ -119,7 +140,10 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </nav>
         </div>
-        <nav className="flex items-center gap-1 overflow-x-auto px-3 pb-2 md:hidden" aria-label="Navegação móvel">
+        <nav
+          className="flex items-center gap-1 overflow-x-auto px-3 pb-2 md:hidden"
+          aria-label="Navegação móvel"
+        >
           {navItems.map((it) => {
             const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (

@@ -20,16 +20,26 @@ import {
 import { useState } from "react";
 
 const ROLE_STYLES: Record<UserRole, { label: string; color: string; icon: typeof Shield }> = {
-  "admin-super": { label: "Admin-Super", color: "bg-danger/20 text-danger border-danger/30", icon: Shield },
+  "admin-super": {
+    label: "Admin-Super",
+    color: "bg-danger/20 text-danger border-danger/30",
+    icon: Shield,
+  },
   admin: { label: "Admin", color: "bg-orange/20 text-orange border-orange/30", icon: UserCog },
-  mediator: { label: "Mediator", color: "bg-primary/20 text-primary border-primary/30", icon: MessagesSquare },
+  mediator: {
+    label: "Mediator",
+    color: "bg-primary/20 text-primary border-primary/30",
+    icon: MessagesSquare,
+  },
   user: { label: "Usuário", color: "bg-muted/20 text-muted-foreground border-border", icon: Eye },
 };
 
 function RoleBadge({ role }: { role: UserRole }) {
   const s = ROLE_STYLES[role];
   return (
-    <span className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${s.color}`}>
+    <span
+      className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${s.color}`}
+    >
       {s.label}
     </span>
   );
@@ -55,7 +65,17 @@ function ProgressBar({ current, max, label }: { current: number; max: number; la
   );
 }
 
-function Section({ title, icon: Icon, children, className }: { title: string; icon: typeof Shield; children: React.ReactNode; className?: string }) {
+function Section({
+  title,
+  icon: Icon,
+  children,
+  className,
+}: {
+  title: string;
+  icon: typeof Shield;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`rounded-xl bg-panel-soft/60 p-3 ${className ?? ""}`}>
       <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold">
@@ -103,7 +123,12 @@ export function AdminPanel() {
   const expKeys = Object.keys(experiments) as ExperimentKey[];
   const tabs = [
     { key: "overview" as const, label: "Visão geral", icon: BarChart3, show: true },
-    { key: "users" as const, label: "Usuários", icon: Users, show: isSuper || isAdmin || isMediator },
+    {
+      key: "users" as const,
+      label: "Usuários",
+      icon: Users,
+      show: isSuper || isAdmin || isMediator,
+    },
     { key: "profiles" as const, label: "Sessão", icon: UserCheck, show: canOverride },
   ].filter((t) => t.show);
 
@@ -127,7 +152,9 @@ export function AdminPanel() {
             <p className="text-[10px] text-muted-foreground">
               {currentUser?.username ?? "sem sessão"} · <RoleBadge role={role} />
               {currentUser?.promoter && (
-                <span className="ml-1 rounded-md border border-gold/30 bg-gold/10 px-1 py-0.5 text-[9px] font-bold text-gold">PROMOTER</span>
+                <span className="ml-1 rounded-md border border-gold/30 bg-gold/10 px-1 py-0.5 text-[9px] font-bold text-gold">
+                  PROMOTER
+                </span>
               )}
             </p>
           </div>
@@ -156,7 +183,9 @@ export function AdminPanel() {
             type="button"
             onClick={() => setTab(t.key)}
             className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${
-              tab === t.key ? "bg-danger/20 text-danger" : "text-muted-foreground hover:text-foreground"
+              tab === t.key
+                ? "bg-danger/20 text-danger"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <t.icon className="mr-1 inline h-3 w-3" />
@@ -173,7 +202,8 @@ export function AdminPanel() {
               R$ {houseFunds.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </div>
             <div className="mt-0.5 text-[10px] text-muted-foreground">
-              Receita total: R$ {totalHouseRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ·{" "}
+              Receita total: R${" "}
+              {totalHouseRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} ·{" "}
               {totalBetsCount.toLocaleString()} apostas
             </div>
           </Section>
@@ -214,7 +244,10 @@ export function AdminPanel() {
                 const p = experiments[k].params;
                 const loss = 1 - p.winChance - p.nearMissChance;
                 return (
-                  <div key={k} className="flex items-center justify-between border-b border-border/40 py-1 last:border-0">
+                  <div
+                    key={k}
+                    className="flex items-center justify-between border-b border-border/40 py-1 last:border-0"
+                  >
                     <span className="text-[11px] text-muted-foreground">{experimentLabels[k]}</span>
                     <span className="font-mono text-[11px]">
                       <span className="text-success">+{p.winChance * 100}%</span>{" "}
@@ -232,7 +265,9 @@ export function AdminPanel() {
               <div className="flex gap-3">
                 {expKeys.map((k) => (
                   <div key={k} className="flex items-center gap-1.5 rounded-md bg-glass px-2 py-1">
-                    <span className="text-[10px] text-muted-foreground">{experimentLabels[k].slice(0, 4)}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {experimentLabels[k].slice(0, 4)}
+                    </span>
                     <span className="font-mono text-sm font-bold">{consecutiveLosses[k]}</span>
                   </div>
                 ))}
@@ -243,7 +278,8 @@ export function AdminPanel() {
           {isMediator && (
             <Section title="Usuários cadastrados" icon={Users}>
               <p className="text-xs text-muted-foreground">
-                {users.length} usuário(s) no sistema. Acesse a aba <strong>Usuários</strong> para visualizar.
+                {users.length} usuário(s) no sistema. Acesse a aba <strong>Usuários</strong> para
+                visualizar.
               </p>
             </Section>
           )}
@@ -258,7 +294,7 @@ export function AdminPanel() {
             const isSelfSuper = u.role === "admin-super";
             const userRole = u.role as UserRole;
             const RoleIcon = ROLE_STYLES[userRole]?.icon ?? Eye;
-            const cannotEdit = (isMediator) || (!canChangeRole && isSelfSuper);
+            const cannotEdit = isMediator || (!canChangeRole && isSelfSuper);
 
             return (
               <div
@@ -270,15 +306,17 @@ export function AdminPanel() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                    u.role === "admin-super"
-                      ? "bg-danger/20 text-danger"
-                      : u.role === "admin"
-                        ? "bg-orange/20 text-orange"
-                        : u.role === "mediator"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted/20 text-muted-foreground"
-                  }`}>
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                      u.role === "admin-super"
+                        ? "bg-danger/20 text-danger"
+                        : u.role === "admin"
+                          ? "bg-orange/20 text-orange"
+                          : u.role === "mediator"
+                            ? "bg-primary/20 text-primary"
+                            : "bg-muted/20 text-muted-foreground"
+                    }`}
+                  >
                     <RoleIcon className="h-4 w-4" />
                   </div>
                   <div>
@@ -289,9 +327,7 @@ export function AdminPanel() {
                           Ativo
                         </span>
                       )}
-                      {u.promoter && (
-                        <Star className="h-3 w-3 text-gold" fill="currentColor" />
-                      )}
+                      {u.promoter && <Star className="h-3 w-3 text-gold" fill="currentColor" />}
                     </div>
                     <div className="flex items-center gap-1.5">
                       <RoleBadge role={userRole} />
@@ -320,7 +356,10 @@ export function AdminPanel() {
                       {(["user", "mediator", "admin", "admin-super"] as UserRole[]).map((r) => {
                         const disabled = !canChangeRole && r === "admin-super";
                         return (
-                          <option key={r} value={r} disabled={disabled}>{ROLE_STYLES[r].label}{disabled ? " (bloqueado)" : ""}</option>
+                          <option key={r} value={r} disabled={disabled}>
+                            {ROLE_STYLES[r].label}
+                            {disabled ? " (bloqueado)" : ""}
+                          </option>
                         );
                       })}
                     </select>
@@ -366,7 +405,9 @@ export function AdminPanel() {
               Usuário: <strong className="text-foreground">{currentUser?.username ?? "—"}</strong> ·{" "}
               Papel real: <RoleBadge role={role} />
               {currentUser?.promoter && (
-                <span className="ml-1 rounded-md border border-gold/30 bg-gold/10 px-1 py-0.5 text-[9px] font-bold text-gold">PROMOTER</span>
+                <span className="ml-1 rounded-md border border-gold/30 bg-gold/10 px-1 py-0.5 text-[9px] font-bold text-gold">
+                  PROMOTER
+                </span>
               )}
             </p>
             <div className="mt-2 grid grid-cols-3 gap-2">

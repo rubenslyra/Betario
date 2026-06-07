@@ -65,7 +65,17 @@ export function exportReportPdf(snap: LabStateSnapshot) {
   autoTable(doc, {
     startY: y + 6,
     head: [
-      ["Experimento", "Preset ativo", "Rodadas", "Acertos", "Quase", "Perdas", "P(win)", "Limite", "Bônus"],
+      [
+        "Experimento",
+        "Preset ativo",
+        "Rodadas",
+        "Acertos",
+        "Quase",
+        "Perdas",
+        "P(win)",
+        "Limite",
+        "Bônus",
+      ],
     ],
     body: snap.experiments.map((e) => [
       e.label,
@@ -86,7 +96,10 @@ export function exportReportPdf(snap: LabStateSnapshot) {
 
   // Saved presets catalogue
   if (snap.presets.length > 0) {
-    if (y > 680) { doc.addPage(); y = margin; }
+    if (y > 680) {
+      doc.addPage();
+      y = margin;
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text("Presets salvos", margin, y);
@@ -109,7 +122,6 @@ export function exportReportPdf(snap: LabStateSnapshot) {
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 18;
   }
 
-
   // Friction events
   if (y > 700) {
     doc.addPage();
@@ -123,10 +135,7 @@ export function exportReportPdf(snap: LabStateSnapshot) {
     head: [["Horário", "Mensagem"]],
     body:
       snap.frictions.length > 0
-        ? snap.frictions.map((f) => [
-            new Date(f.timestamp).toLocaleString("pt-BR"),
-            f.message,
-          ])
+        ? snap.frictions.map((f) => [new Date(f.timestamp).toLocaleString("pt-BR"), f.message])
         : [["—", "Nenhuma fricção registrada."]],
     headStyles: { fillColor: [255, 107, 107], textColor: 255 },
     styles: { fontSize: 8, cellWidth: "wrap" },

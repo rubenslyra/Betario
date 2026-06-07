@@ -55,13 +55,37 @@ export function CharacterReaction({
           {/* eyes */}
           {m === "sad" ? (
             <>
-              <path d="M26 28 q2 -2 4 0" stroke="var(--background)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-              <path d="M34 28 q2 -2 4 0" stroke="var(--background)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+              <path
+                d="M26 28 q2 -2 4 0"
+                stroke="var(--background)"
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <path
+                d="M34 28 q2 -2 4 0"
+                stroke="var(--background)"
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+              />
             </>
           ) : m === "happy" ? (
             <>
-              <path d="M26 27 q2 2 4 0" stroke="var(--background)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-              <path d="M34 27 q2 2 4 0" stroke="var(--background)" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+              <path
+                d="M26 27 q2 2 4 0"
+                stroke="var(--background)"
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+              />
+              <path
+                d="M34 27 q2 2 4 0"
+                stroke="var(--background)"
+                strokeWidth="1.8"
+                fill="none"
+                strokeLinecap="round"
+              />
             </>
           ) : (
             <>
@@ -71,11 +95,28 @@ export function CharacterReaction({
           )}
           {/* mouth */}
           {m === "happy" ? (
-            <path d="M28 32 q4 4 8 0" stroke="var(--background)" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            <path
+              d="M28 32 q4 4 8 0"
+              stroke="var(--background)"
+              strokeWidth="1.6"
+              fill="none"
+              strokeLinecap="round"
+            />
           ) : m === "sad" ? (
-            <path d="M28 34 q4 -3 8 0" stroke="var(--background)" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            <path
+              d="M28 34 q4 -3 8 0"
+              stroke="var(--background)"
+              strokeWidth="1.6"
+              fill="none"
+              strokeLinecap="round"
+            />
           ) : (
-            <path d="M28 33 h8" stroke="var(--background)" strokeWidth="1.6" strokeLinecap="round" />
+            <path
+              d="M28 33 h8"
+              stroke="var(--background)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            />
           )}
         </svg>
       </div>

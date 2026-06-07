@@ -14,10 +14,8 @@ const messages: Record<string, string> = {
     "Resultado simulado: a percepção visual pode enganar a estimativa de volume.",
   "/ledger":
     "O ledger registra eventos como livro-razão. Saldo visual pode ser diferente de saldo realmente sacável.",
-  "/report":
-    "O objetivo é interpretar padrões, fricções e riscos de design — não recompensas.",
-  "/sources":
-    "As referências apresentadas servem como base educacional para discussão crítica.",
+  "/report": "O objetivo é interpretar padrões, fricções e riscos de design — não recompensas.",
+  "/sources": "As referências apresentadas servem como base educacional para discussão crítica.",
 };
 
 export function LegalRiskSnackbar() {

@@ -59,7 +59,10 @@ export function CapacityExperiment() {
   const balanceVisual = useLab((s) => s.balances.visual);
 
   const fill = (g: number) => {
-    if (balanceVisual < 1) { setShowDeposit(true); return; }
+    if (balanceVisual < 1) {
+      setShowDeposit(true);
+      return;
+    }
     setGuess(g);
     setFilling(true);
     setActual(null);
@@ -86,12 +89,15 @@ export function CapacityExperiment() {
     win: "Boa leitura! Agora compare com o relatório.",
   };
 
-  const fillTarget = filling ? 70 : actual ?? 0;
+  const fillTarget = filling ? 70 : (actual ?? 0);
   const diff = guess !== null && actual !== null ? Math.abs(guess - actual) : null;
 
   return (
     <div className="space-y-6">
-      <section className="glass-panel relative overflow-hidden p-6" aria-labelledby="capacity-heading">
+      <section
+        className="glass-panel relative overflow-hidden p-6"
+        aria-labelledby="capacity-heading"
+      >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
@@ -101,7 +107,10 @@ export function CapacityExperiment() {
           }}
         />
         <h2 id="capacity-heading" className="mb-1 text-lg font-semibold">
-          Quantos cabem? <span className="ml-2 rounded-full bg-success/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">Laboratório escolar</span>
+          Quantos cabem?{" "}
+          <span className="ml-2 rounded-full bg-success/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+            Laboratório escolar
+          </span>
         </h2>
         <p className="mb-6 text-xs text-muted-foreground">
           Aposta fictícia de R$1,00. Estime quanto cabe no pote.
@@ -113,7 +122,10 @@ export function CapacityExperiment() {
           aria-live="polite"
         >
           {/* table */}
-          <div className="absolute bottom-3 left-3 right-3 h-5 rounded-md bg-gradient-to-b from-[#b08560] to-[#6a4f31] opacity-80" aria-hidden />
+          <div
+            className="absolute bottom-3 left-3 right-3 h-5 rounded-md bg-gradient-to-b from-[#b08560] to-[#6a4f31] opacity-80"
+            aria-hidden
+          />
           <div className="relative">
             <GlassJar level={fillTarget}>
               <FallingPebbles filling={filling} />
@@ -125,7 +137,7 @@ export function CapacityExperiment() {
           </div>
         </div>
 
-        {showDeposit && <PixDepositModal onClose={() => setShowDeposit(false)} />}
+        {showDeposit && <PixDepositModal blocking onClose={() => setShowDeposit(false)} />}
 
         {balanceVisual < 1 && !filling && (
           <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-3 text-center text-sm">

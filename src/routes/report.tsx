@@ -26,7 +26,6 @@ export const Route = createFileRoute("/report")({
   component: ReportPage,
 });
 
-
 function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="glass-panel p-4">
@@ -119,8 +118,8 @@ function ReportPage() {
         <div>
           <h1 className="text-3xl font-bold">Relatório crítico</h1>
           <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-            Visão agregada do comportamento simulado. Persistência local em
-            SQLite (sql.js) — nada sai do seu navegador.
+            Visão agregada do comportamento simulado. Persistência local em SQLite (sql.js) — nada
+            sai do seu navegador.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -161,7 +160,6 @@ function ReportPage() {
           </button>
         </div>
       </div>
-
 
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-gold">
         Métricas fictícias
@@ -206,11 +204,7 @@ function ReportPage() {
                 <dt className="text-muted-foreground">Bônus</dt>
                 <dd className="text-right font-mono">R$ {e.params.bonusFraction.toFixed(2)}</dd>
                 <dt className="text-muted-foreground">Líquido fictício</dt>
-                <dd
-                  className={`text-right font-mono ${
-                    net >= 0 ? "text-success" : "text-danger"
-                  }`}
-                >
+                <dd className={`text-right font-mono ${net >= 0 ? "text-success" : "text-danger"}`}>
                   R$ {net.toFixed(2)}
                 </dd>
               </dl>
@@ -249,8 +243,7 @@ function ReportPage() {
               caption="Tabela equivalente ao gráfico acima."
               summary={`Resultados por experimento: ${nearMissByExperiment
                 .map(
-                  (d) =>
-                    `${d.label} — acertos ${d.acertos}, quase ${d.quase}, perdas ${d.perdas}.`,
+                  (d) => `${d.label} — acertos ${d.acertos}, quase ${d.quase}, perdas ${d.perdas}.`,
                 )
                 .join(" ")}`}
               columns={[
@@ -263,7 +256,6 @@ function ReportPage() {
             />
           </div>
         </section>
-
 
         <section className="glass-panel p-5" aria-labelledby="chart-ledger">
           <h3 id="chart-ledger" className="mb-3 text-sm font-semibold">
@@ -297,8 +289,7 @@ function ReportPage() {
                     <Cell
                       key={i}
                       fill={
-                        (ledgerColors as Record<string, string>)[d.type] ??
-                        "oklch(0.55 0.04 250)"
+                        (ledgerColors as Record<string, string>)[d.type] ?? "oklch(0.55 0.04 250)"
                       }
                     />
                   ))}
@@ -321,7 +312,6 @@ function ReportPage() {
             />
           </div>
         </section>
-
       </div>
 
       <section className="glass-panel mb-8 p-5" aria-labelledby="interp">
@@ -387,10 +377,7 @@ function ReportPage() {
           ) : (
             <ul className="max-h-72 space-y-2 overflow-auto pr-1 text-xs">
               {frictions.map((f) => (
-                <li
-                  key={f.id}
-                  className="rounded-md border border-border bg-panel-soft/60 p-2"
-                >
+                <li key={f.id} className="rounded-md border border-border bg-panel-soft/60 p-2">
                   <div className="font-mono text-[10px] text-muted-foreground">
                     {new Date(f.timestamp).toLocaleString("pt-BR")}
                   </div>

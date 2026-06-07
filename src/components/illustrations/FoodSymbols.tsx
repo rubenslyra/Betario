@@ -40,7 +40,13 @@ export function Pera() {
 export function Maca() {
   return (
     <Sym label="Maçã">
-      <path d="M32 14 q2 -4 6 -5" stroke="#5a3a16" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path
+        d="M32 14 q2 -4 6 -5"
+        stroke="#5a3a16"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+      />
       <path d="M36 10 q4 -2 7 0 q-1 4 -6 4" fill="#7fb069" />
       <path
         d="M22 22 c-6 0 -10 6 -10 14 c0 14 10 22 20 22 c10 0 20 -8 20 -22 c0 -8 -4 -14 -10 -14 c-4 0 -7 2 -10 4 c-3 -2 -6 -4 -10 -4z"
@@ -71,8 +77,19 @@ export function Ovo() {
 export function Xicara() {
   return (
     <Sym label="Xícara">
-      <path d="M22 18 q0 -2 2 -3 q4 -1 8 -1 q4 0 8 1 q2 1 2 3" stroke="#8aa8c8" strokeWidth="1.5" fill="none" />
-      <path d="M30 12 q0 -4 2 -6 M36 12 q0 -4 -2 -6" stroke="#9fb0c0" strokeWidth="1.2" fill="none" opacity="0.7" />
+      <path
+        d="M22 18 q0 -2 2 -3 q4 -1 8 -1 q4 0 8 1 q2 1 2 3"
+        stroke="#8aa8c8"
+        strokeWidth="1.5"
+        fill="none"
+      />
+      <path
+        d="M30 12 q0 -4 2 -6 M36 12 q0 -4 -2 -6"
+        stroke="#9fb0c0"
+        strokeWidth="1.2"
+        fill="none"
+        opacity="0.7"
+      />
       <path
         d="M18 22 h28 v18 c0 6 -6 12 -14 12 c-8 0 -14 -6 -14 -12z"
         fill="#e8f0f5"
@@ -96,7 +113,13 @@ export function Pao() {
         strokeWidth="1.6"
       />
       <path d="M14 36 q18 6 36 0" stroke="#7a4a18" strokeWidth="1.4" fill="none" />
-      <path d="M20 22 q3 6 0 12 M28 18 q3 8 0 16 M36 18 q-3 8 0 16 M44 22 q-3 6 0 12" stroke="#7a4a18" strokeWidth="1.2" fill="none" opacity="0.6" />
+      <path
+        d="M20 22 q3 6 0 12 M28 18 q3 8 0 16 M36 18 q-3 8 0 16 M44 22 q-3 6 0 12"
+        stroke="#7a4a18"
+        strokeWidth="1.2"
+        fill="none"
+        opacity="0.6"
+      />
       <ellipse cx="22" cy="24" rx="3" ry="2" fill="#fff" opacity="0.35" />
     </Sym>
   );
@@ -106,7 +129,13 @@ export function CafeBean() {
   return (
     <Sym label="Grão de café">
       <ellipse cx="32" cy="32" rx="16" ry="22" fill="#3a1f0f" stroke="#1a0b04" strokeWidth="1.6" />
-      <path d="M32 12 q-4 10 0 20 q-4 10 0 20" stroke="#a8732e" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path
+        d="M32 12 q-4 10 0 20 q-4 10 0 20"
+        stroke="#a8732e"
+        strokeWidth="2"
+        fill="none"
+        strokeLinecap="round"
+      />
       <ellipse cx="26" cy="22" rx="3" ry="5" fill="#a8732e" opacity="0.35" />
     </Sym>
   );

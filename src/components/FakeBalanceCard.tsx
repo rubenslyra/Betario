@@ -33,9 +33,7 @@ function Row({
           {hint && <div className="text-[10px] text-muted-foreground">{hint}</div>}
         </div>
       </div>
-      <div className={`font-mono text-sm font-semibold ${color}`}>
-        R$ {value.toFixed(2)}
-      </div>
+      <div className={`font-mono text-sm font-semibold ${color}`}>R$ {value.toFixed(2)}</div>
     </div>
   );
 }
@@ -66,8 +64,8 @@ export function FakeBalanceCard() {
       <Row icon={Lock} label="Bloqueado" value={b.blocked} accent="danger" />
       <Row icon={Sigma} label="Fracionado" value={b.fractional} hint="Centavos residuais" />
       <p className="mt-3 rounded-md bg-glass p-2 text-[11px] leading-snug text-muted-foreground">
-        Saldo visual não é saldo sacável. Bônus simulado pode aumentar a percepção
-        de disponibilidade sem mudar o valor real retirável.
+        Saldo visual não é saldo sacável. Bônus simulado pode aumentar a percepção de
+        disponibilidade sem mudar o valor real retirável.
       </p>
       {currentUser && (
         <button

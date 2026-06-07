@@ -20,7 +20,7 @@ export type UserRow = {
   email: string;
   password: string;
   role: UserRole;
-  promoter: number;  // 0 or 1
+  promoter: number; // 0 or 1
   created_at: string;
 };
 
@@ -110,7 +110,36 @@ function createSchema(d: Database) {
       created_at TEXT NOT NULL
     );
   `);
+  migrateSchema(d);
   seedUsers(d);
+}
+
+const SCHEMA_VERSION = 2;
+
+function migrateSchema(d: Database) {
+  const verRow = d.exec("SELECT value FROM meta WHERE key = 'schema_version'");
+  const currentVer = verRow[0]?.values[0]?.[0] ? Number(verRow[0].values[0][0]) : 0;
+
+  if (currentVer >= SCHEMA_VERSION) return;
+
+  if (currentVer < 2) {
+    // v1 → v2: add email column, reset seed balances to zero
+    try {
+      d.exec("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''");
+    } catch {
+      // column already exists, ignore
+    }
+    d.exec("DELETE FROM balances");
+    d.exec("DELETE FROM events");
+  }
+
+  try {
+    d.exec("DELETE FROM meta WHERE key = 'schema_version'");
+  } catch {
+    // table may be empty
+  }
+  d.run("INSERT INTO meta (key, value) VALUES ('schema_version', ?)", [String(SCHEMA_VERSION)]);
+  scheduleSave();
 }
 
 function seedUsers(d: Database) {
@@ -122,16 +151,16 @@ function seedUsers(d: Database) {
     "INSERT INTO users (id, username, email, password, role, promoter, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   const seeds: [string, string, string, string, UserRole, number, string][] = [
-    ["user_adm_001",   "ti.rubens.lyra",     "ti@betraylab.io",       "boss2024",   "admin-super", 0, now],
-    ["user_adm_002",   "admin.alice",        "alice@betraylab.io",     "admin123",   "admin",       0, now],
-    ["user_adm_003",   "admin.bob",          "bob@betraylab.io",       "admin123",   "admin",       0, now],
-    ["user_med_001",   "mediator.carla",     "carla@betraylab.io",     "suporte",    "mediator",    0, now],
-    ["user_med_002",   "mediator.david",     "david@betraylab.io",     "suporte",    "mediator",    0, now],
-    ["user_001",       "joao.silva",         "joao@email.com",         "123456",     "user",        0, now],
-    ["user_002",       "maria.santos",       "maria@email.com",        "123456",     "user",        0, now],
-    ["user_003",       "pedro.oliveira",     "pedro@email.com",        "123456",     "user",        0, now],
-    ["user_004",       "ana.lima",           "ana@email.com",          "123456",     "user",        0, now],
-    ["user_005",       "lucas.fernandes",    "lucas@email.com",        "123456",     "user",        1, now],
+    ["user_adm_001", "ti.rubens.lyra", "ti@betraylab.io", "boss2024", "admin-super", 0, now],
+    ["user_adm_002", "admin.alice", "alice@betraylab.io", "admin123", "admin", 0, now],
+    ["user_adm_003", "admin.bob", "bob@betraylab.io", "admin123", "admin", 0, now],
+    ["user_med_001", "mediator.carla", "carla@betraylab.io", "suporte", "mediator", 0, now],
+    ["user_med_002", "mediator.david", "david@betraylab.io", "suporte", "mediator", 0, now],
+    ["user_001", "joao.silva", "joao@email.com", "123456", "user", 0, now],
+    ["user_002", "maria.santos", "maria@email.com", "123456", "user", 0, now],
+    ["user_003", "pedro.oliveira", "pedro@email.com", "123456", "user", 0, now],
+    ["user_004", "ana.lima", "ana@email.com", "123456", "user", 0, now],
+    ["user_005", "lucas.fernandes", "lucas@email.com", "123456", "user", 1, now],
   ];
   for (const row of seeds) {
     stmt.run(row);
@@ -190,7 +219,10 @@ export async function importDb(file: File): Promise<void> {
 export type LoadedState = {
   balances?: Balances;
   experiments: Partial<
-    Record<ExperimentKey, { params: ExperimentParams; stats: ExperimentStats; activePresetId: string | null }>
+    Record<
+      ExperimentKey,
+      { params: ExperimentParams; stats: ExperimentStats; activePresetId: string | null }
+    >
   >;
   presets: Preset[];
   events: LedgerEvent[];
@@ -234,7 +266,13 @@ export async function loadSnapshot(): Promise<LoadedState> {
   );
   if (pRes[0]) {
     out.presets = pRes[0].values.map((r) => {
-      const [id, experiment, name, params, createdAt] = r as [string, string, string, string, string];
+      const [id, experiment, name, params, createdAt] = r as [
+        string,
+        string,
+        string,
+        string,
+        string,
+      ];
       return {
         id,
         experiment: experiment as ExperimentKey,
@@ -251,18 +289,37 @@ export async function loadSnapshot(): Promise<LoadedState> {
   if (evRes[0]) {
     out.events = evRes[0].values.map((r) => {
       const [id, userId, type, amount, before, after, source, target, ts, note, exp] = r as [
-        string, string, string, number, number, number, string, string, string, string, string | null,
+        string,
+        string,
+        string,
+        number,
+        number,
+        number,
+        string,
+        string,
+        string,
+        string,
+        string | null,
       ];
       return {
-        id, userId, type: type as LedgerEvent["type"], amount,
-        beforeBalance: before, afterBalance: after,
-        source, target, timestamp: ts, note,
+        id,
+        userId,
+        type: type as LedgerEvent["type"],
+        amount,
+        beforeBalance: before,
+        afterBalance: after,
+        source,
+        target,
+        timestamp: ts,
+        note,
         experiment: (exp ?? undefined) as ExperimentKey | undefined,
       };
     });
   }
 
-  const fRes = d.exec("SELECT id, timestamp, message FROM frictions ORDER BY timestamp DESC LIMIT 200");
+  const fRes = d.exec(
+    "SELECT id, timestamp, message FROM frictions ORDER BY timestamp DESC LIMIT 200",
+  );
   if (fRes[0]) {
     out.frictions = fRes[0].values.map((r) => {
       const [id, ts, msg] = r as [string, string, string];
@@ -313,23 +370,36 @@ export function persistEvent(e: LedgerEvent) {
     `INSERT OR REPLACE INTO events (id, user_id, type, amount, before_balance, after_balance, source, target, timestamp, note, experiment)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      e.id, e.userId, e.type, e.amount,
-      e.beforeBalance, e.afterBalance,
-      e.source, e.target, e.timestamp, e.note,
+      e.id,
+      e.userId,
+      e.type,
+      e.amount,
+      e.beforeBalance,
+      e.afterBalance,
+      e.source,
+      e.target,
+      e.timestamp,
+      e.note,
       e.experiment ?? null,
     ],
   );
   // Trim
-  db.run("DELETE FROM events WHERE id NOT IN (SELECT id FROM events ORDER BY timestamp DESC LIMIT 400)");
+  db.run(
+    "DELETE FROM events WHERE id NOT IN (SELECT id FROM events ORDER BY timestamp DESC LIMIT 400)",
+  );
   scheduleSave();
 }
 
 export function persistFriction(f: FrictionEntry) {
   if (!db) return;
   db.run("INSERT OR REPLACE INTO frictions (id, timestamp, message) VALUES (?, ?, ?)", [
-    f.id, f.timestamp, f.message,
+    f.id,
+    f.timestamp,
+    f.message,
   ]);
-  db.run("DELETE FROM frictions WHERE id NOT IN (SELECT id FROM frictions ORDER BY timestamp DESC LIMIT 200)");
+  db.run(
+    "DELETE FROM frictions WHERE id NOT IN (SELECT id FROM frictions ORDER BY timestamp DESC LIMIT 200)",
+  );
   scheduleSave();
 }
 
@@ -344,11 +414,29 @@ export function persistPreset(p: Preset) {
 
 export function loadUsers(): UserRow[] {
   if (!db) return [];
-  const res = db.exec("SELECT id, username, email, password, role, promoter, created_at FROM users ORDER BY created_at ASC");
+  const res = db.exec(
+    "SELECT id, username, email, password, role, promoter, created_at FROM users ORDER BY created_at ASC",
+  );
   if (!res[0]) return [];
   return res[0].values.map((r) => {
-    const [id, username, email, password, role, promoter, createdAt] = r as [string, string, string, string, string, number, string];
-    return { id, username, email, password, role: role as UserRole, promoter, created_at: createdAt };
+    const [id, username, email, password, role, promoter, createdAt] = r as [
+      string,
+      string,
+      string,
+      string,
+      string,
+      number,
+      string,
+    ];
+    return {
+      id,
+      username,
+      email,
+      password,
+      role: role as UserRole,
+      promoter,
+      created_at: createdAt,
+    };
   });
 }
 
@@ -359,11 +447,26 @@ export function getUserByLogin(login: string): UserRow | null {
     [login, login],
   );
   if (!res[0]?.values.length) return null;
-  const [id, username, email, password, role, promoter, createdAt] = res[0].values[0] as [string, string, string, string, string, number, string];
+  const [id, username, email, password, role, promoter, createdAt] = res[0].values[0] as [
+    string,
+    string,
+    string,
+    string,
+    string,
+    number,
+    string,
+  ];
   return { id, username, email, password, role: role as UserRole, promoter, created_at: createdAt };
 }
 
-export function createUser(id: string, username: string, email: string, password: string, role: UserRole, promoter: number): boolean {
+export function createUser(
+  id: string,
+  username: string,
+  email: string,
+  password: string,
+  role: UserRole,
+  promoter: number,
+): boolean {
   if (!db) return false;
   try {
     db.run(

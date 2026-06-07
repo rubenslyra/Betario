@@ -47,10 +47,9 @@ function SourcesPage() {
     <AppShell>
       <h1 className="mb-1 text-3xl font-bold">Fontes e alertas</h1>
       <p className="mb-8 max-w-3xl text-sm text-muted-foreground">
-        Este projeto usa referências legais e científicas para fins
-        educacionais. Ele não compara diretamente todas as plataformas digitais
-        a bets, mas discute riscos comuns de design persuasivo, repetição e
-        falta de alerta.
+        Este projeto usa referências legais e científicas para fins educacionais. Ele não compara
+        diretamente todas as plataformas digitais a bets, mas discute riscos comuns de design
+        persuasivo, repetição e falta de alerta.
       </p>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -77,9 +76,8 @@ function SourcesPage() {
 
       <div className="glass-panel mt-8 p-5 text-xs leading-relaxed text-muted-foreground">
         BET-RAY Lab é uma aplicação educacional do projeto{" "}
-        <span className="font-semibold text-foreground">@assincronamente</span>.
-        Não é bet, não aceita dinheiro real, não simula ganhos reais e não
-        recomenda apostas.
+        <span className="font-semibold text-foreground">@assincronamente</span>. Não é bet, não
+        aceita dinheiro real, não simula ganhos reais e não recomenda apostas.
       </div>
     </AppShell>
   );

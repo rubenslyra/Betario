@@ -58,10 +58,7 @@ export function ExperimentControls({ experiment }: { experiment: ExperimentKey }
   const p = exp.params;
 
   return (
-    <section
-      aria-labelledby={`params-${experiment}`}
-      className="glass-panel space-y-4 p-5"
-    >
+    <section aria-labelledby={`params-${experiment}`} className="glass-panel space-y-4 p-5">
       <header className="flex items-center justify-between gap-2">
         <div>
           <h3 id={`params-${experiment}`} className="text-sm font-semibold">
@@ -84,7 +81,6 @@ export function ExperimentControls({ experiment }: { experiment: ExperimentKey }
           Reiniciar
         </button>
       </header>
-
 
       <Slider
         id={`round-${experiment}`}

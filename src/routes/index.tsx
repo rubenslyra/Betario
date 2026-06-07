@@ -29,9 +29,15 @@ const games = [
     ghost: "from-primary/40 to-primary/10",
     art: (
       <div className="flex items-end gap-1">
-        <div className="scale-90"><Pera /></div>
-        <div className="-mt-2 scale-110"><Maca /></div>
-        <div className="scale-90"><CafeBean /></div>
+        <div className="scale-90">
+          <Pera />
+        </div>
+        <div className="-mt-2 scale-110">
+          <Maca />
+        </div>
+        <div className="scale-90">
+          <CafeBean />
+        </div>
       </div>
     ),
   },
@@ -41,7 +47,11 @@ const games = [
     desc: "Veja a jarra derramar e o café subir na xícara — previsão vs. realidade.",
     accent: "from-amber/20 to-amber/5 border-amber/20",
     ghost: "from-amber/40 to-amber/10",
-    art: <div className="scale-125"><Xicara /></div>,
+    art: (
+      <div className="scale-125">
+        <Xicara />
+      </div>
+    ),
   },
   {
     slug: "capacity" as const,
@@ -52,7 +62,12 @@ const games = [
     art: (
       <svg viewBox="0 0 64 64" className="h-14 w-14" aria-label="Pote">
         <rect x="14" y="8" width="36" height="6" rx="2" fill="#8aa8c8" opacity="0.6" />
-        <path d="M16 16 h32 v36 q0 4 -4 4 h-24 q-4 0 -4 -4z" fill="oklch(0.95 0.02 200 / 0.3)" stroke="#aac3d8" strokeWidth="1.5" />
+        <path
+          d="M16 16 h32 v36 q0 4 -4 4 h-24 q-4 0 -4 -4z"
+          fill="oklch(0.95 0.02 200 / 0.3)"
+          stroke="#aac3d8"
+          strokeWidth="1.5"
+        />
         <rect x="20" y="36" width="24" height="18" rx="2" fill="oklch(0.78 0.17 145 / 0.5)" />
         <circle cx="24" cy="40" r="2" fill="#5fbedc" />
         <circle cx="32" cy="44" r="2" fill="#c9a84c" />
@@ -62,7 +77,7 @@ const games = [
   },
 ];
 
-function GameCard({ game }: { game: typeof games[number] }) {
+function GameCard({ game }: { game: (typeof games)[number] }) {
   const currentUser = useLab((s) => s.currentUser);
   const [showAuth, setShowAuth] = useState(false);
 
@@ -136,19 +151,16 @@ function Home() {
           <h1 className="font-mono text-5xl font-bold leading-tight tracking-tight sm:text-7xl">
             BET-<span className="gold-text">RAY</span>
             <br />
-            <span className="text-3xl font-light text-muted-foreground sm:text-4xl">
-              Lab
-            </span>
+            <span className="text-3xl font-light text-muted-foreground sm:text-4xl">Lab</span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Um laboratório educacional para enxergar a matemática, a UX e os
-            riscos por trás das apostas digitais.
+            Um laboratório educacional para enxergar a matemática, a UX e os riscos por trás das
+            apostas digitais.
           </p>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground/80">
-            Explore três experimentos visuais com saldo fictício, bônus
-            simulado e ledger educacional. O objetivo é entender como
-            probabilidade, recompensa, interface e regras de saldo podem
-            influenciar percepção e comportamento.
+            Explore três experimentos visuais com saldo fictício, bônus simulado e ledger
+            educacional. O objetivo é entender como probabilidade, recompensa, interface e regras de
+            saldo podem influenciar percepção e comportamento.
           </p>
         </div>
       </section>
@@ -167,9 +179,18 @@ function Home() {
 
       <section className="mt-12 grid gap-4 sm:grid-cols-3">
         {[
-          { title: "Saldo fictício", text: "Separação visual entre depositado, bônus, sacável e bloqueado." },
-          { title: "Ledger educacional", text: "Cada evento registrado como livro-razão auditável e didático." },
-          { title: "Relatório crítico", text: "Métricas comportamentais, fricções e interpretação ética." },
+          {
+            title: "Saldo fictício",
+            text: "Separação visual entre depositado, bônus, sacável e bloqueado.",
+          },
+          {
+            title: "Ledger educacional",
+            text: "Cada evento registrado como livro-razão auditável e didático.",
+          },
+          {
+            title: "Relatório crítico",
+            text: "Métricas comportamentais, fricções e interpretação ética.",
+          },
         ].map((c) => (
           <div key={c.title} className="glass-panel p-5">
             <h3 className="mb-1 text-sm font-semibold text-gold">{c.title}</h3>

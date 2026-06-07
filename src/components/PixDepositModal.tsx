@@ -6,7 +6,13 @@ type Step = "pix" | "confirm" | "done";
 
 const PIX_KEY = "betraylab@assincronamente.com.br";
 
-export function PixDepositModal({ onClose }: { onClose: () => void }) {
+export function PixDepositModal({
+  onClose,
+  blocking,
+}: {
+  onClose: () => void;
+  blocking?: boolean;
+}) {
   const [step, setStep] = useState<Step>("pix");
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState("");
@@ -32,13 +38,15 @@ export function PixDepositModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="relative w-full max-w-sm rounded-2xl border border-border bg-panel p-6 shadow-2xl">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground transition hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {!blocking && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 rounded-md p-1 text-muted-foreground transition hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
 
         {step === "pix" && (
           <div className="space-y-5">
@@ -56,7 +64,9 @@ export function PixDepositModal({ onClose }: { onClose: () => void }) {
               <div className="flex h-40 w-40 items-center justify-center rounded-xl border-2 border-dashed border-primary/40 bg-background">
                 <div className="text-center">
                   <QrCode className="mx-auto h-12 w-12 text-primary/40" />
-                  <span className="mt-1 block text-[10px] text-muted-foreground">QR code simulado</span>
+                  <span className="mt-1 block text-[10px] text-muted-foreground">
+                    QR code simulado
+                  </span>
                 </div>
               </div>
             </div>
@@ -109,7 +119,10 @@ export function PixDepositModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <label htmlFor="pix-amount" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              <label
+                htmlFor="pix-amount"
+                className="mb-1.5 block text-xs font-medium text-muted-foreground"
+              >
                 Valor (R$)
               </label>
               <input

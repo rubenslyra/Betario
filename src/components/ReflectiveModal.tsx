@@ -40,9 +40,8 @@ export function ReflectiveModal() {
           </h2>
         </div>
         <p id="reflective-desc" className="text-sm leading-relaxed text-muted-foreground">
-          Antes de continuar, observe o relatório parcial. O objetivo deste
-          laboratório não é repetir jogadas, mas entender como a repetição muda
-          a percepção.
+          Antes de continuar, observe o relatório parcial. O objetivo deste laboratório não é
+          repetir jogadas, mas entender como a repetição muda a percepção.
         </p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
           <Link
