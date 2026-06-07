@@ -663,9 +663,11 @@ export function CapacityExperiment() {
             gameState={gameState}
             highlightMilestone={highlightMilestone}
           />
-          <div className="absolute left-4 top-4 rounded-md border border-border bg-glass px-2 py-1 font-mono text-[11px] text-muted-foreground">
-            bolinhas no pote: {Math.min(visibleBalls, POT_CAPACITY_BALLS)} / {POT_CAPACITY_BALLS}
-          </div>
+          {visibleBalls > 0 && (
+            <div className="absolute left-4 top-4 rounded-md border border-border bg-glass px-2 py-1 font-mono text-[11px] text-muted-foreground">
+              bolinhas no pote: {Math.min(visibleBalls, POT_CAPACITY_BALLS)} / {POT_CAPACITY_BALLS}
+            </div>
+          )}
           {visibleBalls > POT_CAPACITY_BALLS && (
             <div className="absolute right-4 top-4 rounded-md border border-warning/40 bg-warning/15 px-2 py-1 text-xs font-bold text-warning">
               transbordou: +{visibleBalls - POT_CAPACITY_BALLS}
