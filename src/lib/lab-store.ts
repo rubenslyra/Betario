@@ -233,6 +233,17 @@ const initialExperiments: Record<ExperimentKey, ExperimentState> = {
   capacity: { params: defaultParams.capacity, stats: { ...emptyStats }, activePresetId: null },
 };
 
+function syncGuaranteedWin(value: boolean) {
+  if (typeof window === "undefined") return;
+  (window as unknown as { __guaranteedWin: (v?: boolean) => boolean }).__guaranteedWin = (v) => {
+    if (v !== undefined) {
+      syncGuaranteedWin(v);
+      return v;
+    }
+    return value;
+  };
+}
+
 export const useLab = create<LabState>((set, get) => ({
   ready: false,
   balances: initialBalances,
@@ -680,9 +691,7 @@ export const useLab = create<LabState>((set, get) => ({
       consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
       pendingBatchWins: 0,
     });
-    if (typeof window !== "undefined") {
-      (window as unknown as Record<string, unknown>).__guaranteedWin = profile === "promoter";
-    }
+    syncGuaranteedWin(profile === "promoter");
   },
 
   unlockAdmin: () => set({ adminUnlocked: true }),
@@ -715,9 +724,7 @@ export const useLab = create<LabState>((set, get) => ({
       consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
       pendingBatchWins: 0,
     });
-    if (typeof window !== "undefined") {
-      (window as unknown as Record<string, unknown>).__guaranteedWin = user.promoter;
-    }
+    syncGuaranteedWin(user.promoter);
   },
 
   setUserRole: (id, role) => {
@@ -790,9 +797,7 @@ export const useLab = create<LabState>((set, get) => ({
       consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
       pendingBatchWins: 0,
     });
-    if (typeof window !== "undefined") {
-      (window as unknown as Record<string, unknown>).__guaranteedWin = user.promoter;
-    }
+    syncGuaranteedWin(user.promoter);
     return true;
   },
 
@@ -815,9 +820,7 @@ export const useLab = create<LabState>((set, get) => ({
       consecutiveLosses: { symbols: 0, coffee: 0, capacity: 0 },
       pendingBatchWins: 0,
     });
-    if (typeof window !== "undefined") {
-      (window as unknown as Record<string, unknown>).__guaranteedWin = false;
-    }
+    syncGuaranteedWin(false);
   },
 
   resetPassword: (login) => {
